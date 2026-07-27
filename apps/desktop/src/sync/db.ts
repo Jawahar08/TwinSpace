@@ -14,7 +14,7 @@ export class SyncNotesDatabase extends Dexie {
   constructor() {
     super('SyncNotesLocalDB');
     this.version(1).stores({
-      notes: 'id, userId, updated_at, [userId+deleted], [userId+archived], pinned',
+      notes: 'id, userId, updatedAt, [userId+deleted], [userId+archived], pinned',
       outbox: 'id, createdAt',
       meta: 'key',
     });

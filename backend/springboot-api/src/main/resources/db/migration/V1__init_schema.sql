@@ -4,17 +4,17 @@ CREATE TABLE users (
     id UUID PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE refresh_tokens (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token_hash VARCHAR(255) NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     revoked BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE notes (
@@ -28,8 +28,8 @@ CREATE TABLE notes (
     version BIGINT NOT NULL DEFAULT 1,
     device_id VARCHAR(255),
     client_mutation_id VARCHAR(255),
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE attachments (
@@ -43,8 +43,8 @@ CREATE TABLE attachments (
     preview_metadata TEXT,
     upload_status VARCHAR(50) NOT NULL,
     deleted BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE sync_revisions (
@@ -57,7 +57,7 @@ CREATE TABLE sync_revisions (
     payload TEXT NOT NULL,
     device_id VARCHAR(255) NOT NULL,
     client_mutation_id VARCHAR(255) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 -- Performance & Query Indexes

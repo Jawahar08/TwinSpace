@@ -1,6 +1,6 @@
-import { contextBridge as o, ipcRenderer as r } from "electron";
-o.exposeInMainWorld("electronAPI", {
-  secureStoreSet: (e, t) => r.invoke("secure-store-set", e, t),
-  secureStoreGet: (e) => r.invoke("secure-store-get", e),
-  secureStoreDelete: (e) => r.invoke("secure-store-delete", e)
+import { contextBridge, ipcRenderer } from "electron";
+contextBridge.exposeInMainWorld("electronAPI", {
+  secureStoreSet: (key, value) => ipcRenderer.invoke("secure-store-set", key, value),
+  secureStoreGet: (key) => ipcRenderer.invoke("secure-store-get", key),
+  secureStoreDelete: (key) => ipcRenderer.invoke("secure-store-delete", key)
 });
