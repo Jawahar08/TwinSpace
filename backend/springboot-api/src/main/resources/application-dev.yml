@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/syncnotes
+    username: syncnotes_user
+    password: syncnotes_pass
+
+logging:
+  level:
+    com.syncnotes: DEBUG

@@ -1,0 +1,25 @@
+node_modules/
+dist/
+build/
+.output/
+.cache/
+.DS_Store
+*.log
+.env
+.env.local
+
+# Java / Maven
+backend/springboot-api/target/
+.mvn/
+*.class
+
+# Electron
+apps/desktop/dist/
+apps/desktop/release/
+apps/desktop/out/
+
+# Mobile / Expo
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/android/
+apps/mobile/ios/

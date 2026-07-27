@@ -1,0 +1,38 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: syncnotes-api
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/syncnotes}
+    username: ${DATABASE_USERNAME:syncnotes_user}
+    password: ${DATABASE_PASSWORD:syncnotes_pass}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000} # 15 min
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 days
+
+storage:
+  provider: ${STORAGE_PROVIDER:local}
+  local-dir: ${STORAGE_LOCAL_DIR:./uploads}
+
+logging:
+  level:
+    root: INFO
+    com.syncnotes: DEBUG

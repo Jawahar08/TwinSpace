@@ -1,0 +1,109 @@
+import { z } from 'zod';
+import type { Note, SyncMutationRequest } from '@syncnotes/types';
+
+// Zod Validation Schemas
+export const registerSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters long'),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required'),
+});
+
+export const syncMutationSchema = z.object({
+  clientMutationId: z.string().min(1),
+  deviceId: z.string().min(1),
+  entityType: z.enum(['NOTE', 'ATTACHMENT']),
+  entityId: z.string().uuid(),
+  operation: z.enum(['CREATE', 'UPDATE', 'DELETE']),
+  baseVersion: z.number().int().nonnegative(),
+  payload: z.record(z.unknown()),
+  clientTimestamp: z.string().datetime({ offset: true }),
+});
+
+export const attachmentUploadInitSchema = z.object({
+  noteId: z.string().uuid(),
+  originalName: z.string().min(1).max(255),
+  mimeType: z.string().min(1),
+  byteSize: z.number().int().positive().max(50 * 1024 * 1024), // 50MB max
+});
+
+// File Attachment Validation Constants & Helpers
+export const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
+export const ALLOWED_MIME_TYPES = new Set([
+  // Images
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+  // Documents
+  'application/pdf', 'application/zip', 'application/x-zip-compressed',
+  'text/plain', 'text/markdown', 'application/json',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  // Audio & Video
+  'audio/mpeg', 'audio/wav', 'audio/aac', 'video/mp4', 'video/webm'
+]);
+
+export function isValidMimeType(mimeType: string): boolean {
+  return ALLOWED_MIME_TYPES.has(mimeType.toLowerCase());
+}
+
+export function isValidFileSize(sizeInBytes: number): boolean {
+  return sizeInBytes > 0 && sizeInBytes <= MAX_FILE_SIZE_BYTES;
+}
+
+// Deterministic Last-Write-Wins (LWW) Conflict Resolution Helper
+export interface LwwComparisonResult {
+  clientWins: boolean;
+  reason: 'CLIENT_NEWER' | 'SERVER_NEWER' | 'TIEBREAKER_CLIENT_WINS' | 'TIEBREAKER_SERVER_WINS';
+}
+
+/**
+ * Compares an incoming client mutation timestamp with the existing entity timestamp.
+ * Uses ISO-8601 UTC string parsing and falls back to deterministic clientMutationId tiebreaker.
+ */
+export function resolveLwwConflict(
+  clientTimestampIso: string,
+  clientMutationId: string,
+  serverTimestampIso: string,
+  serverLastMutationId: string = ''
+): LwwComparisonResult {
+  const clientMs = new Date(clientTimestampIso).getTime();
+  const serverMs = new Date(serverTimestampIso).getTime();
+
+  if (clientMs > serverMs) {
+    return { clientWins: true, reason: 'CLIENT_NEWER' };
+  } else if (serverMs > clientMs) {
+    return { clientWins: false, reason: 'SERVER_NEWER' };
+  } else {
+    // Exact tie on timestamp -> compare mutation IDs deterministically
+    if (clientMutationId >= serverLastMutationId) {
+      return { clientWins: true, reason: 'TIEBREAKER_CLIENT_WINS' };
+    } else {
+      return { clientWins: false, reason: 'TIEBREAKER_SERVER_WINS' };
+    }
+  }
+}
+
+// Client mutation ID generator
+export function generateClientMutationId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 9);
+  return `${timestamp}-${random}`;
+}
+
+// Device ID helper
+export function getOrCreateDeviceId(storageKey: string = 'syncnotes_device_id', getStorage?: () => string | null, setStorage?: (val: string) => void): string {
+  if (getStorage) {
+    const existing = getStorage();
+    if (existing) return existing;
+  }
+  const newDeviceId = 'dev_' + generateClientMutationId();
+  if (setStorage) {
+    setStorage(newDeviceId);
+  }
+  return newDeviceId;
+}

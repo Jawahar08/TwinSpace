@@ -1,0 +1,19 @@
+{
+  "name": "syncnotes-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SyncNotes monorepo for Desktop, Mobile, Backend, and Shared packages",
+  "workspaces": [
+    "shared/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build:shared": "npm run build --workspace=shared/types && npm run build --workspace=shared/utils",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+/* Custom styling for Tiptap rich editor */
+.ProseMirror {
+  outline: none !important;
+  min-height: 350px;
+}
+
+.ProseMirror p {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid #E5A93C;
+  padding-left: 1rem;
+  font-style: italic;
+  margin-bottom: 0.75rem;
+  color: #86868B;
+}
+
+.ProseMirror pre {
+  background-color: #252528;
+  color: #F5F5F7;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-family: monospace;
+  margin-bottom: 0.75rem;
+  overflow-x: auto;
+}
+
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"] {
+  accent-color: #007AFF;
+  cursor: pointer;
+}
