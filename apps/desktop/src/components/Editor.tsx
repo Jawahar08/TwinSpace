@@ -71,6 +71,15 @@ export const Editor: React.FC<EditorProps> = ({
     }
   };
 
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (editor) {
+        editor.commands.focus('start');
+      }
+    }
+  };
+
   if (!note) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-apple-subtextLight dark:text-apple-subtextDark p-8 select-none">
@@ -91,12 +100,20 @@ export const Editor: React.FC<EditorProps> = ({
           type="text"
           value={title}
           onChange={handleTitleChange}
+          onKeyDown={handleTitleKeyDown}
           placeholder="Title"
           className="w-full text-3xl font-bold bg-transparent outline-none border-b border-transparent focus:border-gray-200 dark:focus:border-gray-800 pb-2 mb-4 text-apple-textLight dark:text-apple-textDark placeholder-apple-subtextLight dark:placeholder-apple-subtextDark transition"
         />
 
         {/* Tiptap Editor Content */}
-        <div className="flex-1 text-apple-textLight dark:text-apple-textDark text-sm">
+        <div
+          className="flex-1 text-apple-textLight dark:text-apple-textDark text-sm cursor-text min-h-[300px]"
+          onClick={() => {
+            if (editor && !editor.isFocused) {
+              editor.commands.focus('end');
+            }
+          }}
+        >
           <EditorContent editor={editor} />
         </div>
       </div>
