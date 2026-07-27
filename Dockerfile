@@ -1,14 +1,18 @@
-# Stage 1: Build stage
+# Build Stage
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
+# Copy Maven POM and download dependencies
 COPY backend/springboot-api/pom.xml ./pom.xml
-RUN mvn dependency:go-offline -B -f pom.xml
+RUN mvn dependency:go-offline -B
 
+# Copy Spring Boot backend source code
 COPY backend/springboot-api/src ./src
-RUN mvn package -DskipTests -f pom.xml
 
-# Stage 2: Runtime stage
+# Package Application
+RUN mvn package -DskipTests
+
+# Runtime Stage
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/springboot-api-1.0.0.jar app.jar
