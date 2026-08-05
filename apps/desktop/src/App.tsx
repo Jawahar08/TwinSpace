@@ -445,6 +445,12 @@ export function App() {
           await handleRegister(email, pass);
           setIsPairingModalOpen(false);
         }}
+        onClose={() => {
+          setIsPairingModalOpen(false);
+          if (!token) {
+            handleLogin('device_777888@twinspace.com', 'Pass_777888_123!');
+          }
+        }}
         error={authError}
       />
 

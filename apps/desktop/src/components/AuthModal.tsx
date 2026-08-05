@@ -9,6 +9,8 @@ const KeyRound = (LucideIcons as Record<string, any>).KeyRound || LucideIcons.Su
 const Smartphone = (LucideIcons as Record<string, any>).Smartphone || LucideIcons.Sun;
 const Laptop = (LucideIcons as Record<string, any>).Laptop || LucideIcons.Sun;
 const X = (LucideIcons as Record<string, any>).X || LucideIcons.Sun;
+const ArrowLeft = (LucideIcons as Record<string, any>).ArrowLeft || LucideIcons.Sun;
+const HelpCircle = (LucideIcons as Record<string, any>).HelpCircle || LucideIcons.Sun;
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -24,6 +26,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onLogin, onRegiste
   const [password, setPassword] = useState('');
   const [syncCode, setSyncCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   if (!isOpen) return null;
 
@@ -79,14 +82,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onLogin, onRegiste
   return (
     <div className="fixed inset-0 bg-[var(--modal-background)] backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
       <div className="bg-[var(--modal-surface)] border border-[var(--border-strong)] rounded-3xl p-8 w-full max-w-md shadow-2xl animate-scale-in relative text-[var(--text-primary)]">
-        {onClose && (
+        
+        {/* Top Header Buttons: Help & Close */}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
           <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--modal-surface-raised)] transition"
+            type="button"
+            onClick={() => setShowHelp(!showHelp)}
+            title="How to use pairing code"
+            className="p-1.5 rounded-full text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--modal-surface-raised)] transition"
           >
-            <X className="w-5 h-5" />
+            <HelpCircle className="w-5 h-5" />
           </button>
-        )}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              title="Close window"
+              className="p-1.5 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--modal-surface-raised)] transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
 
         {/* Header Branding */}
         <div className="text-center mb-6">
@@ -112,6 +129,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onLogin, onRegiste
             Enter identical code or credentials on Windows & iPhone to view same content in real-time
           </p>
         </div>
+
+        {/* Collapsible How-To-Use Guide */}
+        {showHelp && (
+          <div className="mb-5 p-4 rounded-2xl bg-[var(--modal-surface-raised)] border border-[var(--border-strong)] text-xs text-[var(--text-secondary)] space-y-2 animate-scale-in">
+            <span className="font-extrabold text-[var(--text-primary)] block text-sm">
+              💡 How 6-Digit Device Pairing Works:
+            </span>
+            <ol className="list-decimal pl-4 space-y-1 font-medium">
+              <li>Open TwinSpace on <strong>Device 1</strong> (e.g. Windows PC). Enter code <code className="text-[var(--accent-primary)] font-bold">777888</code> or any 6-digit key.</li>
+              <li>Open TwinSpace on <strong>Device 2</strong> (e.g. iPhone or 2nd browser window). Enter the <strong>exact same code</strong> (<code className="text-[var(--accent-primary)] font-bold">777888</code>).</li>
+              <li>Both devices instantly link to the same workspace! Edits sync in real time.</li>
+            </ol>
+          </div>
+        )}
 
         {/* Tab Selection */}
         <div className="flex rounded-xl bg-[var(--input-background)] p-1.5 mb-6 border border-[var(--border-default)] text-xs font-bold gap-1">
@@ -275,8 +306,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onLogin, onRegiste
           </form>
         )}
 
+        {/* Explicit Back / Close Button */}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full mt-4 py-2 text-xs font-extrabold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--modal-surface-raised)] rounded-xl transition flex items-center justify-center gap-1.5 border border-[var(--border-default)]"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Workspace
+          </button>
+        )}
+
         {/* Footer Device Connectivity Note */}
-        <div className="mt-6 text-center text-xs font-extrabold text-[var(--text-secondary)] flex items-center justify-center gap-2 pt-2 border-t border-[var(--border-default)]">
+        <div className="mt-4 text-center text-xs font-extrabold text-[var(--text-secondary)] flex items-center justify-center gap-2 pt-2 border-t border-[var(--border-default)]">
           <Laptop className="w-4 h-4 text-sky-400" />
           <span>Windows</span>
           <span className="text-[var(--accent-primary)]">⚡</span>
