@@ -13,6 +13,7 @@ const LogOut = LucideIcons.LogOut;
 const PanelRight = (LucideIcons as Record<string, any>).PanelRight || LucideIcons.Sun;
 const Eye = (LucideIcons as Record<string, any>).Eye || LucideIcons.Sun;
 const Command = (LucideIcons as Record<string, any>).Command || LucideIcons.Sun;
+const KeyRound = (LucideIcons as Record<string, any>).KeyRound || LucideIcons.Sun;
 
 interface HeaderProps {
   searchQuery: string;
@@ -30,6 +31,7 @@ interface HeaderProps {
   onToggleFocusMode: () => void;
   isRightDrawerOpen: boolean;
   onToggleRightDrawer: () => void;
+  onOpenPairingModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -48,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleFocusMode,
   isRightDrawerOpen,
   onToggleRightDrawer,
+  onOpenPairingModal,
 }) => {
   return (
     <header className="h-14 border-b border-continuum-borderLight dark:border-continuum-borderDark bg-continuum-sidebarLight dark:bg-continuum-sidebarDark px-4 flex items-center justify-between gap-4 select-none shrink-0">
@@ -140,6 +143,16 @@ export const Header: React.FC<HeaderProps> = ({
             <Laptop className="w-4 h-4 text-sky-400" />
           )}
           <span className="text-[10px] uppercase font-bold hidden xl:inline">{themeMode}</span>
+        </button>
+
+        {/* Pair Code / Device Sync Button */}
+        <button
+          onClick={onOpenPairingModal}
+          title={userEmail ? `Paired as ${userEmail}. Click to link another device.` : 'Pair via 6-Digit Sync Code'}
+          className="p-1.5 rounded-xl text-continuum-amber hover:bg-continuum-amber/20 transition-all duration-200 active:scale-90 flex items-center gap-1 text-xs font-bold border border-continuum-amber/30"
+        >
+          <KeyRound className="w-3.5 h-3.5" />
+          <span className="hidden lg:inline">Pair Code</span>
         </button>
 
         {/* Sign Out */}

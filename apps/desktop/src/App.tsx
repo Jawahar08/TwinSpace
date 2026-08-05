@@ -32,6 +32,7 @@ export function App() {
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
   const [isTwinSpacePanelOpen, setIsTwinSpacePanelOpen] = useState(false);
+  const [isPairingModalOpen, setIsPairingModalOpen] = useState(false);
   const [handoffState, setHandoffState] = useState<HandoffState | null>(null);
   const [deviceActivities, setDeviceActivities] = useState<DeviceActivity[]>([]);
 
@@ -344,6 +345,7 @@ export function App() {
           onToggleFocusMode={() => setIsFocusMode(true)}
           isRightDrawerOpen={isRightDrawerOpen}
           onToggleRightDrawer={() => setIsRightDrawerOpen(!isRightDrawerOpen)}
+          onOpenPairingModal={() => setIsPairingModalOpen(true)}
         />
       )}
 
@@ -429,11 +431,17 @@ export function App() {
         onToggleTheme={cycleTheme}
       />
 
-      {/* Auth Modal (Presents automatically when unauthenticated) */}
+      {/* Auth & Device Pairing Modal */}
       <AuthModal
-        isOpen={!token}
-        onLogin={handleLogin}
-        onRegister={handleRegister}
+        isOpen={!token || isPairingModalOpen}
+        onLogin={async (email, pass) => {
+          await handleLogin(email, pass);
+          setIsPairingModalOpen(false);
+        }}
+        onRegister={async (email, pass) => {
+          await handleRegister(email, pass);
+          setIsPairingModalOpen(false);
+        }}
         error={authError}
       />
     </div>
