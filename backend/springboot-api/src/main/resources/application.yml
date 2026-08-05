@@ -5,18 +5,7 @@ spring:
   application:
     name: syncnotes-api
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:prod}
-  datasource:
-    url: ${DATABASE_URL:jdbc:h2:mem:syncnotesdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL}
-    username: ${DATABASE_USERNAME:sa}
-    password: ${DATABASE_PASSWORD:}
-    driver-class-name: ${DATABASE_DRIVER:org.h2.Driver}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-  flyway:
-    enabled: false
+    active: ${SPRING_PROFILES_ACTIVE:h2}
 
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}

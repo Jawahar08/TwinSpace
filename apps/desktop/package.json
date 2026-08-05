@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:shared": "cd ../.. && npm run build:shared",
     "typecheck": "tsc --noEmit",
     "package": "npm run build && electron-builder"
   },
