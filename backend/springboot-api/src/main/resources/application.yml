@@ -32,6 +32,10 @@ storage:
   provider: ${STORAGE_PROVIDER:local}
   local-dir: ${STORAGE_LOCAL_DIR:./uploads}
 
+notion:
+  api-key: ${NOTION_API_KEY:}
+  database-id: ${NOTION_DATABASE_ID:}
+
 logging:
   level:
     root: INFO

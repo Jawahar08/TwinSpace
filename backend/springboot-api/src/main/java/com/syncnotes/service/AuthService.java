@@ -26,6 +26,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final NotionSyncService notionSyncService;
 
     @Transactional
     public AuthTokenResponse register(RegisterRequest request) {
@@ -40,6 +41,10 @@ public class AuthService {
 
         user = userRepository.save(user);
 
+        // Record pairing session asynchronously in Notion Database
+        String pairingCode = extractPairingCodeFromEmail(user.getEmail());
+        notionSyncService.recordPairingSessionInNotion(user.getEmail(), pairingCode, "Windows & iPhone");
+
         return createAuthTokenResponse(user);
     }
 
@@ -52,7 +57,19 @@ public class AuthService {
             throw new SyncNotesException("INVALID_CREDENTIALS", "Invalid email or password", HttpStatus.UNAUTHORIZED);
         }
 
+        // Record pairing session asynchronously in Notion Database
+        String pairingCode = extractPairingCodeFromEmail(user.getEmail());
+        notionSyncService.recordPairingSessionInNotion(user.getEmail(), pairingCode, "Windows & iPhone");
+
         return createAuthTokenResponse(user);
+    }
+
+    private String extractPairingCodeFromEmail(String email) {
+        if (email == null) return "TS-PAIRED";
+        if (email.startsWith("device_") && email.contains("@")) {
+            return email.substring(7, email.indexOf("@")).toUpperCase();
+        }
+        return "TS-USER";
     }
 
     @Transactional

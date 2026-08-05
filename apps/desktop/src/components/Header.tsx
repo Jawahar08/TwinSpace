@@ -14,6 +14,7 @@ const PanelRight = (LucideIcons as Record<string, any>).PanelRight || LucideIcon
 const Eye = (LucideIcons as Record<string, any>).Eye || LucideIcons.Sun;
 const Command = (LucideIcons as Record<string, any>).Command || LucideIcons.Sun;
 const KeyRound = (LucideIcons as Record<string, any>).KeyRound || LucideIcons.Sun;
+const Database = (LucideIcons as Record<string, any>).Database || LucideIcons.Sun;
 
 interface HeaderProps {
   searchQuery: string;
@@ -32,6 +33,7 @@ interface HeaderProps {
   isRightDrawerOpen: boolean;
   onToggleRightDrawer: () => void;
   onOpenPairingModal?: () => void;
+  onOpenNotionModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -51,6 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
   isRightDrawerOpen,
   onToggleRightDrawer,
   onOpenPairingModal,
+  onOpenNotionModal,
 }) => {
   return (
     <header className="h-14 border-b border-continuum-borderLight dark:border-continuum-borderDark bg-continuum-sidebarLight dark:bg-continuum-sidebarDark px-4 flex items-center justify-between gap-4 select-none shrink-0">
@@ -153,6 +156,16 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <KeyRound className="w-3.5 h-3.5" />
           <span className="hidden lg:inline">Pair Code</span>
+        </button>
+
+        {/* Notion Database Integration Button */}
+        <button
+          onClick={onOpenNotionModal}
+          title="Notion Database Cloud Integration"
+          className="p-1.5 rounded-xl text-sky-400 hover:bg-sky-500/20 transition-all duration-200 active:scale-90 flex items-center gap-1 text-xs font-bold border border-sky-500/30"
+        >
+          <Database className="w-3.5 h-3.5" />
+          <span className="hidden lg:inline">Notion</span>
         </button>
 
         {/* Sign Out */}

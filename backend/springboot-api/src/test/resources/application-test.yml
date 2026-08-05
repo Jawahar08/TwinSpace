@@ -20,3 +20,7 @@ jwt:
 storage:
   provider: local
   local-dir: ./target/test-uploads
+
+notion:
+  api-key: ""
+  database-id: ""

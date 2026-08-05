@@ -12,6 +12,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { LiveHandoffBanner } from './components/LiveHandoffBanner';
 import { RightDrawer } from './components/RightDrawer';
 import { TwinSpacePanel } from './components/TwinSpacePanel';
+import { NotionSettingsModal } from './components/NotionSettingsModal';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8080';
 
@@ -33,6 +34,7 @@ export function App() {
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
   const [isTwinSpacePanelOpen, setIsTwinSpacePanelOpen] = useState(false);
   const [isPairingModalOpen, setIsPairingModalOpen] = useState(false);
+  const [isNotionModalOpen, setIsNotionModalOpen] = useState(false);
   const [handoffState, setHandoffState] = useState<HandoffState | null>(null);
   const [deviceActivities, setDeviceActivities] = useState<DeviceActivity[]>([]);
 
@@ -346,6 +348,7 @@ export function App() {
           isRightDrawerOpen={isRightDrawerOpen}
           onToggleRightDrawer={() => setIsRightDrawerOpen(!isRightDrawerOpen)}
           onOpenPairingModal={() => setIsPairingModalOpen(true)}
+          onOpenNotionModal={() => setIsNotionModalOpen(true)}
         />
       )}
 
@@ -443,6 +446,12 @@ export function App() {
           setIsPairingModalOpen(false);
         }}
         error={authError}
+      />
+
+      {/* Notion Database Integration Settings Modal */}
+      <NotionSettingsModal
+        isOpen={isNotionModalOpen}
+        onClose={() => setIsNotionModalOpen(false)}
       />
     </div>
   );
