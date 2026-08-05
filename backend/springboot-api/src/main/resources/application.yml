@@ -5,23 +5,19 @@ spring:
   application:
     name: syncnotes-api
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${SPRING_PROFILES_ACTIVE:prod}
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/syncnotes}
-    username: ${DATABASE_USERNAME:syncnotes_user}
-    password: ${DATABASE_PASSWORD:syncnotes_pass}
-    driver-class-name: org.postgresql.Driver
+    url: ${DATABASE_URL:jdbc:h2:mem:syncnotesdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
+    driver-class-name: ${DATABASE_DRIVER:org.h2.Driver}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.dialect.H2Dialect
   flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration
+    enabled: false
 
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
@@ -39,4 +35,4 @@ notion:
 logging:
   level:
     root: INFO
-    com.syncnotes: DEBUG
+    com.syncnotes: INFO
