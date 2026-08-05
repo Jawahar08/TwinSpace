@@ -46,7 +46,7 @@ export const TwinSpaceLiveModule: React.FC<TwinSpaceLiveModuleProps> = ({ metric
             }`}
           />
         </div>
-        <span className="text-[11px] font-extrabold text-continuum-textLight dark:text-continuum-textDark hidden md:inline">
+        <span className="text-[11px] font-extrabold text-continuum-textLight dark:text-continuum-textDark inline-block">
           Windows
         </span>
       </div>
@@ -101,7 +101,7 @@ export const TwinSpaceLiveModule: React.FC<TwinSpaceLiveModuleProps> = ({ metric
             }`}
           />
         </div>
-        <span className="text-[11px] font-extrabold text-continuum-textLight dark:text-continuum-textDark hidden md:inline">
+        <span className="text-[11px] font-extrabold text-continuum-textLight dark:text-continuum-textDark inline-block">
           iPhone
         </span>
       </div>

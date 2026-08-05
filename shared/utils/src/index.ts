@@ -157,10 +157,13 @@ export type ThemeMode = 'dark' | 'light' | 'system';
 
 export function getStoredTheme(): ThemeMode {
   if (typeof window === 'undefined') return 'dark';
-  const saved = localStorage.getItem('twinspace_theme') || localStorage.getItem('syncnotes_theme');
-  if (saved === 'light' || saved === 'dark' || saved === 'system') {
-    return saved;
+  const savedTwin = localStorage.getItem('twinspace_theme');
+  if (savedTwin === 'light' || savedTwin === 'dark' || savedTwin === 'system') {
+    return savedTwin;
   }
+  // Clear any legacy keys that might force light mode
+  localStorage.removeItem('syncnotes_theme');
+  localStorage.setItem('twinspace_theme', 'dark');
   return 'dark';
 }
 
@@ -182,14 +185,25 @@ export function applyTheme(mode: ThemeMode): 'dark' | 'light' {
   }
 
   const root = document.documentElement;
+  const body = document.body;
+
   root.setAttribute('data-theme', effective);
+  if (body) body.setAttribute('data-theme', effective);
 
   if (effective === 'dark') {
     root.classList.add('dark');
     root.classList.remove('light');
+    if (body) {
+      body.classList.add('dark');
+      body.classList.remove('light');
+    }
   } else {
     root.classList.remove('dark');
     root.classList.add('light');
+    if (body) {
+      body.classList.remove('dark');
+      body.classList.add('light');
+    }
   }
 
   return effective;

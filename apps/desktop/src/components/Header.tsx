@@ -61,8 +61,8 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="hidden sm:flex flex-col">
-          <span className="font-extrabold text-sm tracking-tight bg-gradient-to-r from-white via-slate-200 to-amber-400 bg-clip-text text-transparent">
-            TwinSpace
+          <span className="font-extrabold text-sm tracking-tight text-continuum-textLight dark:text-continuum-textDark">
+            Twin<span className="text-continuum-amber">Space</span>
           </span>
           <span className="text-[9px] font-bold text-continuum-amber tracking-widest uppercase">
             Continuum
