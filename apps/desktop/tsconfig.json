@@ -18,8 +18,17 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@syncnotes/types": ["../../shared/types/src/index.ts"],
+      "@syncnotes/types/*": ["../../shared/types/src/*"],
+      "@syncnotes/utils": ["../../shared/utils/src/index.ts"],
+      "@syncnotes/utils/*": ["../../shared/utils/src/*"]
     }
   },
-  "include": ["src/**/*", "electron/**/*"]
+  "include": [
+    "src/**/*",
+    "electron/**/*",
+    "../../shared/types/src/**/*",
+    "../../shared/utils/src/**/*"
+  ]
 }

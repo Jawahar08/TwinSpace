@@ -31,6 +31,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@syncnotes/types': path.resolve(__dirname, '../../shared/types/src/index.ts'),
+      '@syncnotes/utils': path.resolve(__dirname, '../../shared/utils/src/index.ts'),
     },
   },
   server: {
