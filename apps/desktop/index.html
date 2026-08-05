@@ -1,9 +1,29 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TwinSpace Continuum — Private Workspace</title>
+    <script>
+      (function() {
+        try {
+          var mode = localStorage.getItem('twinspace_theme') || localStorage.getItem('syncnotes_theme') || 'dark';
+          var effective = mode;
+          if (mode === 'system') {
+            effective = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          var root = document.documentElement;
+          root.setAttribute('data-theme', effective);
+          if (effective === 'dark') {
+            root.classList.add('dark');
+            root.classList.remove('light');
+          } else {
+            root.classList.remove('dark');
+            root.classList.add('light');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-continuum-bgLight dark:bg-continuum-bgDark text-continuum-textLight dark:text-continuum-textDark antialiased select-none font-sans overflow-hidden">
     <div id="root"></div>

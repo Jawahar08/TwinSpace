@@ -18,36 +18,49 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(245, 158, 11, 0.2);
+    background: rgba(245, 158, 11, 0.25);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(245, 158, 11, 0.5);
+    background: rgba(245, 158, 11, 0.55);
   }
 }
 
-/* Animations & Keyframes */
+/* Animations & Keyframes for TwinSpace Live Realtime State Bridge */
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
   }
   50% {
-    box-shadow: 0 0 24px rgba(245, 158, 11, 0.6);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.55);
   }
 }
 
-@keyframes ring-expand {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.8;
+@keyframes node-breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes particle-travel-east {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
     opacity: 1;
   }
   100% {
-    transform: scale(0.95);
-    opacity: 0.8;
+    offset-distance: 100%;
+    opacity: 0;
   }
 }
 
@@ -63,7 +76,7 @@
 @keyframes scale-in-pop {
   0% {
     opacity: 0;
-    transform: scale(0.94) translateY(-10px);
+    transform: scale(0.95) translateY(-8px);
   }
   100% {
     opacity: 1;
@@ -86,8 +99,8 @@
   animation: glow-pulse 3s infinite ease-in-out;
 }
 
-.animate-ring-expand {
-  animation: ring-expand 2s infinite ease-in-out;
+.animate-node-breathe {
+  animation: node-breathe 2.5s infinite ease-in-out;
 }
 
 .animate-scale-in {
@@ -102,6 +115,18 @@
   background: linear-gradient(90deg, rgba(245,158,11,0.1) 0%, rgba(251,191,36,0.3) 50%, rgba(245,158,11,0.1) 100%);
   background-size: 200% 100%;
   animation: shimmer-slide 3s infinite linear;
+}
+
+/* Accessibility / Reduced Motion Fallback */
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse,
+  .animate-node-breathe,
+  .animate-scale-in,
+  .animate-slide-in-right,
+  .shimmer-gradient {
+    animation: none !important;
+    transform: none !important;
+  }
 }
 
 /* Custom styling for Tiptap rich editor */

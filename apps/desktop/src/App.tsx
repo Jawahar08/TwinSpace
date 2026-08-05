@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Note, Attachment, AuthTokenResponse, HandoffState, DeviceActivity } from '@syncnotes/types';
+import { getStoredTheme, setStoredTheme, applyTheme, type ThemeMode } from '@syncnotes/utils';
 import { db } from './sync/db';
-import { syncEngine, type SyncState } from './sync/syncEngine';
+import { syncEngine, type SyncState, type TwinSpaceMetrics } from './sync/syncEngine';
 import { Header } from './components/Header';
 import { NotesList, type ViewFilter } from './components/NotesList';
 import { Editor } from './components/Editor';
@@ -10,6 +11,7 @@ import { AuthModal } from './components/AuthModal';
 import { CommandPalette } from './components/CommandPalette';
 import { LiveHandoffBanner } from './components/LiveHandoffBanner';
 import { RightDrawer } from './components/RightDrawer';
+import { TwinSpacePanel } from './components/TwinSpacePanel';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8080';
 
@@ -20,28 +22,24 @@ export function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<ViewFilter>('ALL');
   const [syncState, setSyncState] = useState<SyncState>('OFFLINE');
+  const [metrics, setMetrics] = useState<TwinSpaceMetrics>(syncEngine.getMetrics());
   const [updatedJustNow, setUpdatedJustNow] = useState(false);
   const [updatedFromDevice, setUpdatedFromDevice] = useState<'Windows' | 'iPhone' | 'Device'>('iPhone');
-  const [darkMode, setDarkMode] = useState(true);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(getStoredTheme());
   const [authError, setAuthError] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
+  const [isTwinSpacePanelOpen, setIsTwinSpacePanelOpen] = useState(false);
   const [handoffState, setHandoffState] = useState<HandoffState | null>(null);
   const [deviceActivities, setDeviceActivities] = useState<DeviceActivity[]>([]);
 
   // Load theme & auth token on startup
   useEffect(() => {
-    const savedTheme = localStorage.getItem('twinspace_theme') || localStorage.getItem('syncnotes_theme');
-    if (savedTheme === 'light') {
-      setDarkMode(false);
-      document.documentElement.classList.remove('dark');
-    } else {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('twinspace_theme', 'dark');
-    }
+    const mode = getStoredTheme();
+    setThemeMode(mode);
+    applyTheme(mode);
 
     const loadToken = async () => {
       let storedToken = localStorage.getItem('syncnotes_access_token');
@@ -58,15 +56,25 @@ export function App() {
     loadToken();
   }, []);
 
-  // Subscribe to syncEngine state, remote updates & device activity stream
+  // Listen to system theme changes if themeMode === 'system'
+  useEffect(() => {
+    if (themeMode === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = () => applyTheme('system');
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, [themeMode]);
+
+  // Subscribe to syncEngine state, metrics, remote updates & device activity stream
   useEffect(() => {
     const unsubState = syncEngine.subscribeState(setSyncState);
+    const unsubMetrics = syncEngine.subscribeMetrics(setMetrics);
 
     const unsubRemote = syncEngine.subscribeRemoteUpdate((updatedNote, originDeviceType) => {
       setUpdatedJustNow(true);
       setUpdatedFromDevice(originDeviceType);
 
-      // Trigger Live Handoff banner if update comes from another device (e.g. iPhone)
       if (originDeviceType === 'iPhone') {
         setHandoffState({
           noteId: updatedNote.id,
@@ -84,13 +92,14 @@ export function App() {
 
     return () => {
       unsubState();
+      unsubMetrics();
       unsubRemote();
       unsubActivity();
     };
   }, []);
 
-  // Fetch current notes from Dexie local IndexedDB
-  const allNotes = useLiveQuery(() => db.notes.orderBy('updatedAt').reverse().toArray(), []) || [];
+  // Fetch reactive notes list from IndexedDB using Dexie live query
+  const allNotes = useLiveQuery(() => db.notes.orderBy('updatedAt').reverse().toArray()) || [];
 
   // Filter notes by search query
   const displayedNotes = allNotes.filter((note) => {
@@ -99,29 +108,39 @@ export function App() {
     return note.title.toLowerCase().includes(q) || note.content.toLowerCase().includes(q);
   });
 
-  // Select first note automatically if none selected
+  // Automatically select first note if none is selected
   useEffect(() => {
     if (!selectedNoteId && displayedNotes.length > 0) {
-      const active = displayedNotes.find((n) => !n.deleted && !n.archived);
-      if (active) setSelectedNoteId(active.id);
+      setSelectedNoteId(displayedNotes[0].id);
     }
-  }, [displayedNotes, selectedNoteId]);
+  }, [displayedNotes.length, selectedNoteId]);
 
-  const activeNote = allNotes.find((n) => n.id === selectedNoteId) || null;
-
-  // Fetch attachments for active note
+  // Fetch attachments when selected note changes
   useEffect(() => {
-    if (activeNote && token) {
-      fetch(`${API_BASE}/api/attachments/note/${activeNote.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => (res.ok ? res.json() : []))
-        .then(setAttachments)
-        .catch(() => setAttachments([]));
+    if (selectedNoteId) {
+      db.attachments.where('noteId').equals(selectedNoteId).toArray().then(setAttachments);
     } else {
       setAttachments([]);
     }
-  }, [activeNote?.id, token]);
+  }, [selectedNoteId]);
+
+  // Global Keyboard Shortcuts (Ctrl+K for Command Palette, Ctrl+N for New Note)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        handleNewNote();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const activeNote = displayedNotes.find((n) => n.id === selectedNoteId) || null;
 
   const fetchMe = async (authToken: string) => {
     try {
@@ -132,8 +151,8 @@ export function App() {
         const data = await res.json();
         setUserEmail(data.email);
       }
-    } catch {
-      // Ignore
+    } catch (e) {
+      console.error('Fetch me failed', e);
     }
   };
 
@@ -146,13 +165,20 @@ export function App() {
         body: JSON.stringify({ email, password: pass }),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || 'Login failed');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Login failed');
       }
       const data: AuthTokenResponse = await res.json();
-      saveAuthSession(data);
+      setToken(data.accessToken);
+      setUserEmail(email);
+      localStorage.setItem('syncnotes_access_token', data.accessToken);
+      if (window.electronAPI) {
+        await window.electronAPI.secureStoreSet('access_token', data.accessToken);
+      }
+      syncEngine.setToken(data.accessToken);
     } catch (err: any) {
-      setAuthError(err.message);
+      setAuthError(err.message || 'Invalid email or password');
+      throw err;
     }
   };
 
@@ -165,139 +191,137 @@ export function App() {
         body: JSON.stringify({ email, password: pass }),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || 'Registration failed');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Registration failed');
       }
       const data: AuthTokenResponse = await res.json();
-      saveAuthSession(data);
+      setToken(data.accessToken);
+      setUserEmail(email);
+      localStorage.setItem('syncnotes_access_token', data.accessToken);
+      if (window.electronAPI) {
+        await window.electronAPI.secureStoreSet('access_token', data.accessToken);
+      }
+      syncEngine.setToken(data.accessToken);
     } catch (err: any) {
-      setAuthError(err.message);
+      setAuthError(err.message || 'Registration failed');
+      throw err;
     }
   };
 
-  const saveAuthSession = (data: AuthTokenResponse) => {
-    setToken(data.accessToken);
-    setUserEmail(data.user.email);
-    localStorage.setItem('syncnotes_access_token', data.accessToken);
-    if (window.electronAPI) {
-      window.electronAPI.secureStoreSet('access_token', data.accessToken);
-    }
-    syncEngine.setToken(data.accessToken);
-  };
-
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setToken(null);
     setUserEmail(undefined);
     localStorage.removeItem('syncnotes_access_token');
     if (window.electronAPI) {
-      window.electronAPI.secureStoreDelete('access_token');
+      await window.electronAPI.secureStoreDelete('access_token');
     }
     syncEngine.setToken(null);
   };
 
   const handleNewNote = async () => {
-    const newNoteId = crypto.randomUUID();
-    const created = await syncEngine.queueMutation(newNoteId, 'CREATE', {
+    const newNote: Note = {
+      id: crypto.randomUUID(),
       title: 'Untitled Note',
       content: '',
+      deviceId: syncEngine.getDeviceId(),
+      version: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       pinned: false,
       archived: false,
       deleted: false,
-    });
-    setSelectedNoteId(created.id);
+    };
+    await db.notes.put(newNote);
+    setSelectedNoteId(newNote.id);
+    await syncEngine.trackLocalChange('NOTE', newNote.id, 'CREATE', newNote, 0);
   };
 
   const handleSaveNote = async (id: string, title: string, content: string) => {
-    await syncEngine.queueMutation(id, 'UPDATE', { title, content });
+    const existing = await db.notes.get(id);
+    if (!existing) return;
+
+    const updated: Note = {
+      ...existing,
+      title,
+      content,
+      updatedAt: new Date().toISOString(),
+      version: existing.version + 1,
+    };
+
+    await db.notes.put(updated);
+    await syncEngine.trackLocalChange('NOTE', updated.id, 'UPDATE', updated, existing.version);
   };
 
   const handleTogglePin = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const note = allNotes.find((n) => n.id === id);
-    if (note) {
-      await syncEngine.queueMutation(id, 'UPDATE', { pinned: !note.pinned });
-    }
+    const existing = await db.notes.get(id);
+    if (!existing) return;
+    const updated = { ...existing, pinned: !existing.pinned, updatedAt: new Date().toISOString() };
+    await db.notes.put(updated);
+    await syncEngine.trackLocalChange('NOTE', id, 'UPDATE', updated, existing.version);
   };
 
   const handleToggleArchive = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const note = allNotes.find((n) => n.id === id);
-    if (note) {
-      await syncEngine.queueMutation(id, 'UPDATE', { archived: !note.archived });
-    }
+    const existing = await db.notes.get(id);
+    if (!existing) return;
+    const updated = { ...existing, archived: !existing.archived, updatedAt: new Date().toISOString() };
+    await db.notes.put(updated);
+    await syncEngine.trackLocalChange('NOTE', id, 'UPDATE', updated, existing.version);
   };
 
   const handleSoftDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    await syncEngine.queueMutation(id, 'DELETE', { deleted: true });
-    if (selectedNoteId === id) setSelectedNoteId(null);
+    const existing = await db.notes.get(id);
+    if (!existing) return;
+    const updated = { ...existing, deleted: true, updatedAt: new Date().toISOString() };
+    await db.notes.put(updated);
+    await syncEngine.trackLocalChange('NOTE', id, 'DELETE', updated, existing.version);
   };
 
   const handleRestore = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    await syncEngine.queueMutation(id, 'UPDATE', { deleted: false });
+    const existing = await db.notes.get(id);
+    if (!existing) return;
+    const updated = { ...existing, deleted: false, archived: false, updatedAt: new Date().toISOString() };
+    await db.notes.put(updated);
+    await syncEngine.trackLocalChange('NOTE', id, 'UPDATE', updated, existing.version);
   };
 
   const handleUploadFile = async (file: File) => {
-    if (!activeNote || !token) return;
-    try {
-      const initRes = await fetch(`${API_BASE}/api/attachments/init`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          noteId: activeNote.id,
-          originalName: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          byteSize: file.size,
-        }),
-      });
-      if (!initRes.ok) return;
-      const initData = await initRes.json();
+    if (!selectedNoteId) return;
 
-      const formData = new FormData();
-      formData.append('file', file);
+    const newAtt: Attachment = {
+      id: crypto.randomUUID(),
+      noteId: selectedNoteId,
+      originalName: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      byteSize: file.size,
+      storageKey: `mock/${selectedNoteId}/${file.name}`,
+      createdAt: new Date().toISOString(),
+      downloadUrl: URL.createObjectURL(file),
+    };
 
-      const uploadRes = await fetch(`${API_BASE}${initData.uploadUrl}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-
-      if (uploadRes.ok) {
-        const newAtt = await uploadRes.json();
-        setAttachments((prev) => [...prev, newAtt]);
-      }
-    } catch (err) {
-      console.error('Attachment upload error', err);
-    }
+    await db.attachments.put(newAtt);
+    setAttachments((prev) => [newAtt, ...prev]);
+    await syncEngine.trackLocalChange('ATTACHMENT', newAtt.id, 'CREATE', newAtt, 0);
   };
 
-  const handleDeleteAttachment = async (attachmentId: string) => {
-    if (!token) return;
-    try {
-      await fetch(`${API_BASE}/api/attachments/${attachmentId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
-    } catch (err) {
-      console.error('Attachment delete error', err);
-    }
+  const handleDeleteAttachment = async (attId: string) => {
+    await db.attachments.delete(attId);
+    setAttachments((prev) => prev.filter((a) => a.id !== attId));
+    await syncEngine.trackLocalChange('ATTACHMENT', attId, 'DELETE', { id: attId }, 0);
   };
 
-  const toggleTheme = () => {
-    const next = !darkMode;
-    setDarkMode(next);
-    if (next) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('twinspace_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('twinspace_theme', 'light');
-    }
+  const cycleTheme = () => {
+    let next: ThemeMode = 'dark';
+    if (themeMode === 'dark') next = 'light';
+    else if (themeMode === 'light') next = 'system';
+    else next = 'dark';
+
+    setThemeMode(next);
+    setStoredTheme(next);
+    applyTheme(next);
   };
 
   return (
@@ -308,11 +332,12 @@ export function App() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onNewNote={handleNewNote}
-          syncState={syncState}
+          metrics={metrics}
+          onOpenTwinSpacePanel={() => setIsTwinSpacePanelOpen(true)}
           updatedJustNow={updatedJustNow}
           updatedFromDevice={updatedFromDevice}
-          darkMode={darkMode}
-          onToggleTheme={toggleTheme}
+          themeMode={themeMode}
+          onCycleTheme={cycleTheme}
           onSignOut={handleSignOut}
           userEmail={userEmail}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
@@ -376,19 +401,35 @@ export function App() {
         )}
       </div>
 
+      {/* TwinSpace Live Details Modal */}
+      <TwinSpacePanel
+        isOpen={isTwinSpacePanelOpen}
+        onClose={() => setIsTwinSpacePanelOpen(false)}
+        metrics={metrics}
+        onForceSync={() => syncEngine.flushOutbox()}
+      />
+
       {/* Command Palette Modal (Ctrl+K) */}
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         notes={allNotes}
-        onSelectNote={setSelectedNoteId}
-        onNewNote={handleNewNote}
-        onToggleFocusMode={() => setIsFocusMode(true)}
-        onToggleTheme={toggleTheme}
-        darkMode={darkMode}
+        onSelectNote={(noteId) => {
+          setSelectedNoteId(noteId);
+          setIsCommandPaletteOpen(false);
+        }}
+        onNewNote={() => {
+          handleNewNote();
+          setIsCommandPaletteOpen(false);
+        }}
+        onToggleFocusMode={() => {
+          setIsFocusMode(true);
+          setIsCommandPaletteOpen(false);
+        }}
+        onToggleTheme={cycleTheme}
       />
 
-      {/* Authentication Modal */}
+      {/* Auth Modal (Presents automatically when unauthenticated) */}
       <AuthModal
         isOpen={!token}
         onLogin={handleLogin}

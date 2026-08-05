@@ -152,3 +152,45 @@ export function extractAutoTitle(contentHtmlOrText: string, currentTitle: string
   return firstLine || 'Untitled Note';
 }
 
+// Theme System Types & Single Source of Truth Utility
+export type ThemeMode = 'dark' | 'light' | 'system';
+
+export function getStoredTheme(): ThemeMode {
+  if (typeof window === 'undefined') return 'dark';
+  const saved = localStorage.getItem('twinspace_theme') || localStorage.getItem('syncnotes_theme');
+  if (saved === 'light' || saved === 'dark' || saved === 'system') {
+    return saved;
+  }
+  return 'dark';
+}
+
+export function setStoredTheme(mode: ThemeMode): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('twinspace_theme', mode);
+  }
+}
+
+export function applyTheme(mode: ThemeMode): 'dark' | 'light' {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return 'dark';
+  
+  let effective: 'dark' | 'light' = 'dark';
+  if (mode === 'system') {
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    effective = systemPrefersDark ? 'dark' : 'light';
+  } else {
+    effective = mode;
+  }
+
+  const root = document.documentElement;
+  root.setAttribute('data-theme', effective);
+
+  if (effective === 'dark') {
+    root.classList.add('dark');
+    root.classList.remove('light');
+  } else {
+    root.classList.remove('dark');
+    root.classList.add('light');
+  }
+
+  return effective;
+}

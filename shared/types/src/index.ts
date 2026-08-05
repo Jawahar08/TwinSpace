@@ -31,7 +31,7 @@ export interface RefreshTokenRequest {
 // Canonical Note Model
 export interface Note {
   id: string;
-  userId: string;
+  userId?: string;
   title: string;
   content: string;
   pinned: boolean;
@@ -52,16 +52,16 @@ export type UploadStatus = 'PENDING' | 'UPLOADING' | 'COMPLETED' | 'FAILED';
 export interface Attachment {
   id: string;
   noteId: string;
-  userId: string;
+  userId?: string;
   originalName: string;
   mimeType: string;
   byteSize: number;
   storageKey: string;
   previewMetadata?: string; // JSON string (width, height, thumbnail, etc)
-  uploadStatus: UploadStatus;
-  deleted: boolean;
+  uploadStatus?: UploadStatus;
+  deleted?: boolean;
   createdAt: string; // ISO 8601 UTC
-  updatedAt: string; // ISO 8601 UTC
+  updatedAt?: string; // ISO 8601 UTC
   downloadUrl?: string;
 }
 
@@ -124,6 +124,7 @@ export interface SyncCursorRequest {
 export interface SyncResyncResponse {
   requiresSnapshot: boolean;
   latestRevision: number;
+  notes?: Note[];
   changes: SyncChangeEvent[];
   snapshot?: {
     notes: Note[];
@@ -166,4 +167,3 @@ export interface ApiErrorResponse {
   timestamp: string;
   details?: Record<string, unknown>;
 }
-
