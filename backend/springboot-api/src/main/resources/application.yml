@@ -4,8 +4,23 @@ server:
 spring:
   application:
     name: syncnotes-api
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:h2}
+  datasource:
+    url: jdbc:h2:mem:syncnotes;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
 jwt:
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
@@ -23,4 +38,4 @@ notion:
 logging:
   level:
     root: INFO
-    com.syncnotes: INFO
+    com.syncnotes: DEBUG
