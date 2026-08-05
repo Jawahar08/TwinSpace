@@ -35,10 +35,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onRegister }) =
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.inner}>
         <View style={styles.header}>
           <View style={styles.logo}>
-            <Text style={styles.logoText}>SN</Text>
+            <Text style={styles.logoText}>TS</Text>
           </View>
-          <Text style={styles.title}>{isRegister ? 'Create Account' : 'SyncNotes'}</Text>
-          <Text style={styles.subtitle}>Private real-time note sync for iPhone</Text>
+          <Text style={styles.title}>{isRegister ? 'Create Account' : 'TwinSpace'}</Text>
+          <Text style={styles.subtitle}>Private real-time continuity workspace for iPhone</Text>
         </View>
 
         {error && (
@@ -52,7 +52,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onRegister }) =
           <TextInput
             style={styles.input}
             placeholder="user@example.com"
-            placeholderTextColor="#86868B"
+            placeholderTextColor="#94a3b8"
             autoCapitalize="none"
             keyboardType="email-address"
             value={email}
@@ -63,17 +63,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onRegister }) =
           <TextInput
             style={styles.input}
             placeholder="••••••••"
-            placeholderTextColor="#86868B"
+            placeholderTextColor="#94a3b8"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
 
-          <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
+          <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading} activeOpacity={0.8}>
             {loading ? (
               <ActivityIndicator color="#FFF" />
             ) : (
-              <Text style={styles.buttonText}>{isRegister ? 'Register' : 'Sign In'}</Text>
+              <Text style={styles.buttonText}>{isRegister ? 'Register' : 'Sign In to TwinSpace'}</Text>
             )}
           </TouchableOpacity>
 
@@ -89,20 +89,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onRegister }) =
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1E1E1E' },
+  container: { flex: 1, backgroundColor: '#0f1013' },
   inner: { flex: 1, justifyContent: 'center', padding: 24 },
   header: { alignItems: 'center', marginBottom: 32, marginTop: 40 },
-  logo: { width: 56, height: 56, borderRadius: 16, backgroundColor: '#E5A93C', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  logoText: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#F5F5F7' },
-  subtitle: { fontSize: 13, color: '#98989D', marginTop: 4 },
-  errorBox: { backgroundColor: 'rgba(255, 59, 48, 0.15)', borderWidth: 1, borderColor: 'rgba(255, 59, 48, 0.3)', padding: 12, borderRadius: 12, marginBottom: 16 },
-  errorText: { color: '#FF3B30', fontSize: 12, textAlign: 'center' },
+  logo: { width: 56, height: 56, borderRadius: 18, backgroundColor: '#f59e0b', justifyContent: 'center', alignItems: 'center', marginBottom: 12, elevation: 6 },
+  logoText: { color: '#FFF', fontSize: 22, fontWeight: '900' },
+  title: { fontSize: 28, fontWeight: '800', color: '#f1f5f9', letterSpacing: -0.5 },
+  subtitle: { fontSize: 13, color: '#94a3b8', marginTop: 4 },
+  errorBox: { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)', padding: 12, borderRadius: 12, marginBottom: 16 },
+  errorText: { color: '#ef4444', fontSize: 12, textAlign: 'center' },
   form: { width: '100%' },
-  label: { color: '#98989D', fontSize: 12, fontWeight: '600', marginBottom: 6 },
-  input: { backgroundColor: '#2C2C2E', color: '#F5F5F7', padding: 14, borderRadius: 12, fontSize: 15, marginBottom: 16 },
-  button: { backgroundColor: '#E5A93C', padding: 15, borderRadius: 12, alignItems: 'center', marginTop: 8 },
+  label: { color: '#94a3b8', fontSize: 12, fontWeight: '600', marginBottom: 6 },
+  input: { backgroundColor: '#17191e', color: '#f1f5f9', padding: 14, borderRadius: 12, fontSize: 15, borderBottomWidth: 1, borderColor: '#232630', marginBottom: 16 },
+  button: { backgroundColor: '#f59e0b', padding: 15, borderRadius: 14, alignItems: 'center', marginTop: 8 },
   buttonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
   switchBtn: { marginTop: 20, alignItems: 'center' },
-  switchText: { color: '#E5A93C', fontSize: 13 },
+  switchText: { color: '#f59e0b', fontSize: 13, fontWeight: '600' },
 });

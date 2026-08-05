@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import * as LucideIcons from 'lucide-react';
 import type { Note } from '@syncnotes/types';
 
-const Search = (LucideIcons as any).Search;
-const SquarePen = (LucideIcons as any).SquarePen;
-const Moon = (LucideIcons as any).Moon;
-const Sun = (LucideIcons as any).Sun;
-const Eye = (LucideIcons as any).Eye;
-const X = (LucideIcons as any).X;
+const Search = (LucideIcons as Record<string, any>).Search || LucideIcons.Sun;
+const SquarePen = (LucideIcons as Record<string, any>).SquarePen || LucideIcons.Sun;
+const Moon = LucideIcons.Moon;
+const Sun = LucideIcons.Sun;
+const Eye = (LucideIcons as Record<string, any>).Eye || LucideIcons.Sun;
+const X = (LucideIcons as Record<string, any>).X || LucideIcons.Sun;
 
 interface CommandPaletteProps {
   isOpen: boolean;

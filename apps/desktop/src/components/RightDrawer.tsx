@@ -3,16 +3,16 @@ import * as LucideIcons from 'lucide-react';
 import type { Note, Attachment, DeviceActivity } from '@syncnotes/types';
 import { calculateReadingStats, formatBytes, getReadableDeviceName } from '@syncnotes/utils';
 
-const X = (LucideIcons as any).X;
-const FileText = (LucideIcons as any).FileText;
-const Paperclip = (LucideIcons as any).Paperclip;
-const Zap = (LucideIcons as any).Zap || (LucideIcons as any).Activity;
-const Phone = (LucideIcons as any).Phone || (LucideIcons as any).Smartphone;
-const Laptop = (LucideIcons as any).Laptop || (LucideIcons as any).Monitor;
-const Book = (LucideIcons as any).Book || (LucideIcons as any).BookOpen;
-const Trash2 = (LucideIcons as any).Trash2;
-const Download = (LucideIcons as any).Download;
-const Upload = (LucideIcons as any).Upload || (LucideIcons as any).UploadCloud;
+const X = (LucideIcons as Record<string, any>).X || LucideIcons.Sun;
+const FileText = (LucideIcons as Record<string, any>).FileText || LucideIcons.Sun;
+const Paperclip = (LucideIcons as Record<string, any>).Paperclip || LucideIcons.Sun;
+const Zap = (LucideIcons as Record<string, any>).Zap || LucideIcons.Sun;
+const Phone = (LucideIcons as Record<string, any>).Phone || LucideIcons.Sun;
+const Laptop = (LucideIcons as Record<string, any>).Laptop || LucideIcons.Sun;
+const Book = (LucideIcons as Record<string, any>).Book || LucideIcons.Sun;
+const Trash2 = (LucideIcons as Record<string, any>).Trash2 || LucideIcons.Sun;
+const Download = (LucideIcons as Record<string, any>).Download || LucideIcons.Sun;
+const Upload = (LucideIcons as Record<string, any>).Upload || LucideIcons.Sun;
 
 interface RightDrawerProps {
   isOpen: boolean;
