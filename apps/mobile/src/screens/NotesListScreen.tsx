@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput, SafeAreaView } from 'react-native';
 import type { Note } from '@syncnotes/types';
 import type { SyncState } from '../sync/mobileSyncEngine';
+import { getReadableDeviceName } from '@syncnotes/utils';
 
 interface NotesListScreenProps {
   notes: Note[];
@@ -39,30 +40,38 @@ export const NotesListScreen: React.FC<NotesListScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Mobile Top Header */}
+      {/* Mobile Header Bar */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.title}>Notes</Text>
+          <View>
+            <Text style={styles.title}>SyncNotes</Text>
+            <Text style={styles.subtitle}>CONTINUUM • IPHONE</Text>
+          </View>
+
           <View style={styles.actions}>
             <View style={[styles.badge, syncState === 'CONNECTED' ? styles.badgeSuccess : styles.badgeWarn]}>
-              <Text style={styles.badgeText}>{syncState === 'CONNECTED' ? 'Synced' : 'Offline'}</Text>
+              <View style={[styles.dot, syncState === 'CONNECTED' ? styles.dotSuccess : styles.dotWarn]} />
+              <Text style={[styles.badgeText, syncState === 'CONNECTED' ? styles.textSuccess : styles.textWarn]}>
+                {syncState === 'CONNECTED' ? 'Synced' : 'Offline'}
+              </Text>
             </View>
+
             <TouchableOpacity onPress={onSignOut} style={styles.iconBtn}>
               <Text style={styles.iconBtnText}>Exit</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Search Bar */}
+        {/* Search Bar Input */}
         <TextInput
           style={styles.searchBar}
-          placeholder="Search"
-          placeholderTextColor="#86868B"
+          placeholder="Search notes across devices..."
+          placeholderTextColor="#94a3b8"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
 
-        {/* Filters */}
+        {/* Category Filters Pill Group */}
         <View style={styles.filterRow}>
           {(['ALL', 'PINNED', 'ARCHIVED', 'TRASH'] as const).map((f) => (
             <TouchableOpacity
@@ -71,38 +80,49 @@ export const NotesListScreen: React.FC<NotesListScreenProps> = ({
               style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
             >
               <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                {f === 'ALL' ? 'All Notes' : f.charAt(0) + f.slice(1).toLowerCase()}
+                {f === 'ALL' ? 'Notes' : f.charAt(0) + f.slice(1).toLowerCase()}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      {/* Notes List */}
+      {/* Notes FlatList Stream */}
       <FlatList
         data={filteredNotes}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.noteCard} onPress={() => onSelectNote(item)}>
-            <View style={styles.noteTitleRow}>
-              <Text style={styles.noteTitle} numberOfLines={1}>
-                {item.title || 'Untitled Note'}
+        renderItem={({ item }) => {
+          const originDevice = getReadableDeviceName(item.deviceId);
+
+          return (
+            <TouchableOpacity style={styles.noteCard} onPress={() => onSelectNote(item)} activeOpacity={0.7}>
+              <View style={styles.noteTitleRow}>
+                <Text style={styles.noteTitle} numberOfLines={1}>
+                  {item.title || 'Untitled Note'}
+                </Text>
+                {item.pinned && <Text style={styles.pinBadge}>📌</Text>}
+              </View>
+
+              <Text style={styles.noteSnippet} numberOfLines={2}>
+                {item.content.replace(/<[^>]*>?/gm, '') || 'No additional content'}
               </Text>
-              {item.pinned && <Text style={styles.pinIcon}>📌</Text>}
-            </View>
-            <View style={styles.noteMetaRow}>
-              <Text style={styles.noteDate}>{formatDate(item.updatedAt)}</Text>
-              <Text style={styles.noteSnippet} numberOfLines={1}>
-                {item.content.replace(/<[^>]*>?/gm, '') || 'No additional text'}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
+
+              <View style={styles.noteMetaRow}>
+                <Text style={styles.noteDate}>{formatDate(item.updatedAt)}</Text>
+                <View style={styles.deviceTag}>
+                  <Text style={styles.deviceTagText}>
+                    {originDevice === 'Windows' ? '💻 Windows' : '📱 iPhone'}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
 
-      {/* Floating Add Note Button */}
-      <TouchableOpacity style={styles.fab} onPress={onNewNote}>
+      {/* Floating Action Button (New Note) */}
+      <TouchableOpacity style={styles.fab} onPress={onNewNote} activeOpacity={0.8}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -110,31 +130,39 @@ export const NotesListScreen: React.FC<NotesListScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1E1E1E' },
-  header: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#2C2C2E' },
+  container: { flex: 1, backgroundColor: '#0f1013' },
+  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#232630' },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#F5F5F7' },
+  title: { fontSize: 26, fontWeight: '800', color: '#f1f5f9', letterSpacing: -0.5 },
+  subtitle: { fontSize: 9, fontWeight: '700', color: '#f59e0b', letterSpacing: 1, marginTop: 2 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  badgeSuccess: { backgroundColor: 'rgba(52, 199, 89, 0.2)' },
-  badgeWarn: { backgroundColor: 'rgba(255, 149, 0, 0.2)' },
-  badgeText: { fontSize: 11, fontWeight: '600', color: '#34C759' },
-  iconBtn: { padding: 6 },
-  iconBtnText: { color: '#E5A93C', fontSize: 13, fontWeight: '600' },
-  searchBar: { backgroundColor: '#2C2C2E', color: '#F5F5F7', padding: 10, borderRadius: 10, fontSize: 14, marginBottom: 12 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14 },
+  badgeSuccess: { backgroundColor: 'rgba(52, 199, 89, 0.15)', borderWidth: 1, borderColor: 'rgba(52, 199, 89, 0.3)' },
+  badgeWarn: { backgroundColor: 'rgba(245, 158, 11, 0.15)', borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.3)' },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  dotSuccess: { backgroundColor: '#34C759' },
+  dotWarn: { backgroundColor: '#f59e0b' },
+  badgeText: { fontSize: 11, fontWeight: '700' },
+  textSuccess: { color: '#34C759' },
+  textWarn: { color: '#f59e0b' },
+  iconBtn: { paddingHorizontal: 8, paddingVertical: 4 },
+  iconBtnText: { color: '#f59e0b', fontSize: 13, fontWeight: '600' },
+  searchBar: { backgroundColor: '#17191e', color: '#f1f5f9', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, fontSize: 14, borderBottomWidth: 1, borderColor: '#232630', marginBottom: 12 },
   filterRow: { flexDirection: 'row', gap: 8 },
-  filterBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: '#252528' },
-  filterBtnActive: { backgroundColor: '#E5A93C' },
-  filterText: { color: '#98989D', fontSize: 12, fontWeight: '500' },
-  filterTextActive: { color: '#FFF', fontWeight: 'bold' },
+  filterBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12, backgroundColor: '#17191e', borderWidth: 1, borderColor: '#232630' },
+  filterBtnActive: { backgroundColor: '#f59e0b', borderColor: '#f59e0b' },
+  filterText: { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
+  filterTextActive: { color: '#FFF', fontWeight: '800' },
   listContent: { padding: 16, gap: 10 },
-  noteCard: { backgroundColor: '#2C2C2E', padding: 14, borderRadius: 14 },
-  noteTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  noteTitle: { fontSize: 16, fontWeight: '600', color: '#F5F5F7', flex: 1 },
-  pinIcon: { fontSize: 12, marginLeft: 6 },
-  noteMetaRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  noteDate: { fontSize: 12, color: '#98989D', fontWeight: '500' },
-  noteSnippet: { fontSize: 13, color: '#86868B', flex: 1 },
-  fab: { position: 'absolute', right: 20, bottom: 30, width: 56, height: 56, borderRadius: 28, backgroundColor: '#E5A93C', justifyContent: 'center', alignItems: 'center', elevation: 5 },
-  fabText: { color: '#FFF', fontSize: 32, fontWeight: '300', marginTop: -2 },
+  noteCard: { backgroundColor: '#17191e', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#232630' },
+  noteTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  noteTitle: { fontSize: 16, fontWeight: '700', color: '#f1f5f9', flex: 1 },
+  pinBadge: { fontSize: 12, marginLeft: 6 },
+  noteSnippet: { fontSize: 13, color: '#94a3b8', lineHeight: 18, marginBottom: 10 },
+  noteMetaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  noteDate: { fontSize: 11, color: '#64748b', fontWeight: '600' },
+  deviceTag: { backgroundColor: '#232630', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
+  deviceTagText: { fontSize: 10, color: '#f59e0b', fontWeight: '700' },
+  fab: { position: 'absolute', right: 20, bottom: 30, width: 56, height: 56, borderRadius: 28, backgroundColor: '#f59e0b', justifyContent: 'center', alignItems: 'center', elevation: 8, shadowColor: '#f59e0b', shadowOpacity: 0.4, shadowRadius: 8 },
+  fabText: { color: '#FFF', fontSize: 32, fontWeight: '300', marginTop: -3 },
 });

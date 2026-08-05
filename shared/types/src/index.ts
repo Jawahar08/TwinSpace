@@ -131,6 +131,26 @@ export interface SyncResyncResponse {
   };
 }
 
+// Live Handoff State
+export interface HandoffState {
+  noteId: string;
+  noteTitle: string;
+  originDeviceId: string;
+  originDeviceType: 'Windows' | 'iPhone' | 'Device';
+  timestamp: string;
+}
+
+// Device Activity Event for Sync Activity Drawer
+export interface DeviceActivity {
+  id: string;
+  deviceId: string;
+  deviceType: 'Windows' | 'iPhone' | 'Device';
+  operation: MutationOperation;
+  noteId: string;
+  noteTitle: string;
+  timestamp: string;
+}
+
 // Outbox item structure for offline persistence on clients
 export interface OutboxItem {
   id: string; // Unique queue item ID
@@ -146,3 +166,4 @@ export interface ApiErrorResponse {
   timestamp: string;
   details?: Record<string, unknown>;
 }
+

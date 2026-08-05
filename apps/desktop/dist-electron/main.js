@@ -1,16 +1,15 @@
-import { app, ipcMain, safeStorage, BrowserWindow } from "electron";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-const __filename$1 = fileURLToPath(import.meta.url);
-const __dirname$1 = path.dirname(__filename$1);
-let mainWindow = null;
-function getStoreFilePath() {
-  const userDataPath = app.getPath("userData");
-  return path.join(userDataPath, "syncnotes_vault.bin");
+import { app as c, ipcMain as u, safeStorage as n, BrowserWindow as h } from "electron";
+import l from "path";
+import o from "fs";
+import { fileURLToPath as m } from "url";
+const w = m(import.meta.url), p = l.dirname(w);
+let f = null;
+function y() {
+  const a = c.getPath("userData");
+  return l.join(a, "syncnotes_vault.bin");
 }
-function createWindow() {
-  mainWindow = new BrowserWindow({
+function S() {
+  f = new h({
     width: 1100,
     height: 720,
     minWidth: 800,
@@ -18,83 +17,60 @@ function createWindow() {
     titleBarStyle: "hiddenInset",
     backgroundColor: "#1E1E1E",
     webPreferences: {
-      preload: path.join(__dirname$1, "preload.js"),
-      nodeIntegration: false,
-      contextIsolation: true,
-      sandbox: true
+      preload: l.join(p, "preload.js"),
+      nodeIntegration: !1,
+      contextIsolation: !0,
+      sandbox: !0
     }
-  });
-  if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(path.join(__dirname$1, "../dist/index.html"));
-  }
+  }), process.env.VITE_DEV_SERVER_URL ? f.loadURL(process.env.VITE_DEV_SERVER_URL) : f.loadFile(l.join(p, "../dist/index.html"));
 }
-app.whenReady().then(() => {
-  ipcMain.handle("secure-store-set", async (_, key, value) => {
+c.whenReady().then(() => {
+  u.handle("secure-store-set", async (a, i, e) => {
     try {
-      if (!safeStorage.isEncryptionAvailable()) {
-        return false;
-      }
-      const file = getStoreFilePath();
-      let storeData = {};
-      if (fs.existsSync(file)) {
+      if (!n.isEncryptionAvailable())
+        return !1;
+      const t = y();
+      let r = {};
+      if (o.existsSync(t))
         try {
-          const encBuf = fs.readFileSync(file);
-          const decStr = safeStorage.decryptString(encBuf);
-          storeData = JSON.parse(decStr);
+          const d = o.readFileSync(t), g = n.decryptString(d);
+          r = JSON.parse(g);
         } catch {
-          storeData = {};
+          r = {};
         }
-      }
-      storeData[key] = value;
-      const encrypted = safeStorage.encryptString(JSON.stringify(storeData));
-      fs.writeFileSync(file, encrypted);
-      return true;
-    } catch (err) {
-      console.error("secure-store-set error", err);
-      return false;
+      r[i] = e;
+      const s = n.encryptString(JSON.stringify(r));
+      return o.writeFileSync(t, s), !0;
+    } catch (t) {
+      return console.error("secure-store-set error", t), !1;
     }
-  });
-  ipcMain.handle("secure-store-get", async (_, key) => {
+  }), u.handle("secure-store-get", async (a, i) => {
     try {
-      if (!safeStorage.isEncryptionAvailable()) return null;
-      const file = getStoreFilePath();
-      if (!fs.existsSync(file)) return null;
-      const encBuf = fs.readFileSync(file);
-      const decStr = safeStorage.decryptString(encBuf);
-      const storeData = JSON.parse(decStr);
-      return storeData[key] || null;
-    } catch (err) {
-      console.error("secure-store-get error", err);
-      return null;
+      if (!n.isEncryptionAvailable()) return null;
+      const e = y();
+      if (!o.existsSync(e)) return null;
+      const t = o.readFileSync(e), r = n.decryptString(t);
+      return JSON.parse(r)[i] || null;
+    } catch (e) {
+      return console.error("secure-store-get error", e), null;
     }
-  });
-  ipcMain.handle("secure-store-delete", async (_, key) => {
+  }), u.handle("secure-store-delete", async (a, i) => {
     try {
-      const file = getStoreFilePath();
-      if (fs.existsSync(file) && safeStorage.isEncryptionAvailable()) {
-        const encBuf = fs.readFileSync(file);
-        const decStr = safeStorage.decryptString(encBuf);
-        const storeData = JSON.parse(decStr);
-        delete storeData[key];
-        const encrypted = safeStorage.encryptString(JSON.stringify(storeData));
-        fs.writeFileSync(file, encrypted);
+      const e = y();
+      if (o.existsSync(e) && n.isEncryptionAvailable()) {
+        const t = o.readFileSync(e), r = n.decryptString(t), s = JSON.parse(r);
+        delete s[i];
+        const d = n.encryptString(JSON.stringify(s));
+        o.writeFileSync(e, d);
       }
-      return true;
+      return !0;
     } catch {
-      return false;
+      return !1;
     }
-  });
-  createWindow();
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+  }), S(), c.on("activate", () => {
+    h.getAllWindows().length === 0 && S();
   });
 });
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+c.on("window-all-closed", () => {
+  process.platform !== "darwin" && c.quit();
 });

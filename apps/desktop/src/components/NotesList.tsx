@@ -1,6 +1,15 @@
 import React from 'react';
+import * as LucideIcons from 'lucide-react';
 import type { Note } from '@syncnotes/types';
-import { Pin, Archive, Trash2, RotateCcw, FileText } from 'lucide-react';
+import { getReadableDeviceName } from '@syncnotes/utils';
+
+const Pin = (LucideIcons as any).Pin;
+const Archive = (LucideIcons as any).Archive;
+const Trash2 = (LucideIcons as any).Trash2;
+const RotateCcw = (LucideIcons as any).RotateCcw;
+const FileText = (LucideIcons as any).FileText;
+const Smartphone = (LucideIcons as any).Smartphone || (LucideIcons as any).Phone;
+const Monitor = (LucideIcons as any).Monitor || (LucideIcons as any).Laptop;
 
 export type ViewFilter = 'ALL' | 'PINNED' | 'ARCHIVED' | 'TRASH';
 
@@ -52,17 +61,17 @@ export const NotesList: React.FC<NotesListProps> = ({
   };
 
   return (
-    <div className="w-80 border-r border-gray-200 dark:border-gray-800 bg-apple-sidebarLight dark:bg-apple-sidebarDark flex flex-col shrink-0 select-none">
-      {/* Category Filter Pills */}
-      <div className="p-2 border-b border-gray-200 dark:border-gray-800/80 flex items-center justify-around gap-1 text-[11px] font-medium text-apple-subtextLight dark:text-apple-subtextDark">
+    <div className="w-80 border-r border-continuum-borderLight dark:border-continuum-borderDark bg-continuum-sidebarLight dark:bg-continuum-sidebarDark flex flex-col shrink-0 select-none overflow-hidden">
+      {/* Category Navigation Bar */}
+      <div className="p-2 border-b border-continuum-borderLight dark:border-continuum-borderDark flex items-center justify-around gap-1 text-[11px] font-medium text-continuum-subtextLight dark:text-continuum-subtextDark">
         {(['ALL', 'PINNED', 'ARCHIVED', 'TRASH'] as ViewFilter[]).map((f) => (
           <button
             key={f}
             onClick={() => onFilterChange(f)}
-            className={`px-2.5 py-1 rounded-lg transition ${
+            className={`px-2.5 py-1.5 rounded-xl transition ${
               filter === f
-                ? 'bg-apple-cardLight dark:bg-apple-cardDark text-apple-yellow font-semibold shadow-xs'
-                : 'hover:bg-gray-200/50 dark:hover:bg-gray-800/50'
+                ? 'bg-continuum-cardLight dark:bg-continuum-cardDark text-continuum-amber font-semibold shadow-xs border border-continuum-borderLight dark:border-continuum-borderDark'
+                : 'hover:bg-black/5 dark:hover:bg-white/5'
             }`}
           >
             {f === 'ALL' ? 'Notes' : f.charAt(0) + f.slice(1).toLowerCase()}
@@ -70,34 +79,38 @@ export const NotesList: React.FC<NotesListProps> = ({
         ))}
       </div>
 
-      {/* Notes Items List */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      {/* Notes Stream */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
         {filteredNotes.length === 0 ? (
-          <div className="h-40 flex flex-col items-center justify-center text-center p-4 text-apple-subtextLight dark:text-apple-subtextDark">
-            <FileText className="w-8 h-8 stroke-[1.5] mb-2 opacity-50" />
-            <p className="text-xs font-medium">No notes found</p>
+          <div className="h-44 flex flex-col items-center justify-center text-center p-4 text-continuum-subtextLight dark:text-continuum-subtextDark">
+            <FileText className="w-8 h-8 stroke-[1.5] mb-2 opacity-40 text-continuum-amber" />
+            <p className="text-xs font-semibold">No notes in this view</p>
+            <p className="text-[10px] opacity-70 mt-0.5">Create a note to start typing</p>
           </div>
         ) : (
           filteredNotes.map((note) => {
             const isSelected = note.id === selectedNoteId;
+            const originDevice = getReadableDeviceName(note.deviceId);
+
             return (
               <div
                 key={note.id}
                 onClick={() => onSelectNote(note.id)}
-                className={`group relative p-3 rounded-xl cursor-pointer transition-all duration-150 ${
+                className={`group relative p-3 rounded-xl cursor-pointer transition-all duration-150 border ${
                   isSelected
-                    ? 'bg-apple-yellow text-white shadow-md'
-                    : 'bg-apple-cardLight dark:bg-apple-cardDark hover:bg-white/80 dark:hover:bg-gray-800/80 text-apple-textLight dark:text-apple-textDark'
+                    ? 'bg-gradient-to-r from-continuum-amber/20 to-continuum-amber/10 border-continuum-amber/40 text-continuum-textLight dark:text-continuum-textDark shadow-md'
+                    : 'bg-continuum-cardLight dark:bg-continuum-cardDark border-continuum-borderLight dark:border-continuum-borderDark hover:border-continuum-amber/30 text-continuum-textLight dark:text-continuum-textDark'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h3
-                    className={`font-semibold text-xs truncate flex-1 ${
-                      isSelected ? 'text-white' : 'text-apple-textLight dark:text-apple-textDark'
-                    }`}
-                  >
-                    {note.title.trim() || 'Untitled Note'}
-                  </h3>
+                  <div className="flex items-center gap-1.5 truncate flex-1">
+                    {note.pinned && (
+                      <Pin className="w-3 h-3 text-continuum-amber fill-continuum-amber shrink-0" />
+                    )}
+                    <h3 className="font-semibold text-xs truncate">
+                      {note.title.trim() || 'Untitled Note'}
+                    </h3>
+                  </div>
 
                   {/* Actions Bar */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -107,7 +120,7 @@ export const NotesList: React.FC<NotesListProps> = ({
                           onClick={(e) => onTogglePin(note.id, e)}
                           title={note.pinned ? 'Unpin' : 'Pin'}
                           className={`p-1 rounded hover:bg-black/10 transition ${
-                            note.pinned ? 'text-apple-yellow fill-apple-yellow' : ''
+                            note.pinned ? 'text-continuum-amber' : 'text-continuum-subtextLight dark:text-continuum-subtextDark'
                           }`}
                         >
                           <Pin className="w-3 h-3" />
@@ -115,14 +128,14 @@ export const NotesList: React.FC<NotesListProps> = ({
                         <button
                           onClick={(e) => onToggleArchive(note.id, e)}
                           title={note.archived ? 'Unarchive' : 'Archive'}
-                          className="p-1 rounded hover:bg-black/10 transition"
+                          className="p-1 rounded text-continuum-subtextLight dark:text-continuum-subtextDark hover:bg-black/10 transition"
                         >
                           <Archive className="w-3 h-3" />
                         </button>
                         <button
                           onClick={(e) => onSoftDelete(note.id, e)}
                           title="Delete"
-                          className="p-1 rounded hover:bg-black/10 hover:text-red-500 transition"
+                          className="p-1 rounded text-continuum-subtextLight dark:text-continuum-subtextDark hover:bg-black/10 hover:text-rose-500 transition"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -139,21 +152,18 @@ export const NotesList: React.FC<NotesListProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span
-                    className={`text-[10px] whitespace-nowrap font-medium ${
-                      isSelected ? 'text-white/80' : 'text-apple-subtextLight dark:text-apple-subtextDark'
-                    }`}
-                  >
-                    {formatDate(note.updatedAt)}
-                  </span>
-                  <p
-                    className={`text-[11px] truncate flex-1 ${
-                      isSelected ? 'text-white/90' : 'text-apple-subtextLight dark:text-apple-subtextDark'
-                    }`}
-                  >
+                <div className="flex items-baseline justify-between gap-2 mt-1.5">
+                  <p className="text-[11px] truncate flex-1 text-continuum-subtextLight dark:text-continuum-subtextDark">
                     {getPreviewText(note.content)}
                   </p>
+                  <div className="flex items-center gap-1 text-[10px] text-continuum-subtextLight dark:text-continuum-subtextDark whitespace-nowrap">
+                    {originDevice === 'iPhone' ? (
+                      <Smartphone className="w-3 h-3 text-amber-500" title="Created/updated on iPhone" />
+                    ) : (
+                      <Monitor className="w-3 h-3 text-sky-400" title="Created/updated on Windows" />
+                    )}
+                    <span>{formatDate(note.updatedAt)}</span>
+                  </div>
                 </div>
               </div>
             );

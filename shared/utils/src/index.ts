@@ -107,3 +107,48 @@ export function getOrCreateDeviceId(storageKey: string = 'syncnotes_device_id', 
   }
   return newDeviceId;
 }
+
+// Readable device name helper ("Windows", "iPhone", or "Device")
+export function getReadableDeviceName(deviceId?: string): 'Windows' | 'iPhone' | 'Device' {
+  if (!deviceId) return 'Device';
+  const lower = deviceId.toLowerCase();
+  if (lower.includes('iphone') || lower.includes('ios') || lower.includes('mobile')) {
+    return 'iPhone';
+  }
+  if (lower.includes('win') || lower.includes('desktop') || lower.includes('pc')) {
+    return 'Windows';
+  }
+  return 'Device';
+}
+
+// Byte formatting helper
+export function formatBytes(bytes: number, decimals: number = 1): string {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+// Reading stats helper (word count & estimated reading time)
+export function calculateReadingStats(contentHtmlOrText: string): { wordCount: number; charCount: number; readingTimeMinutes: number } {
+  const cleanText = contentHtmlOrText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const words = cleanText ? cleanText.split(' ').filter(Boolean) : [];
+  const wordCount = words.length;
+  const charCount = cleanText.length;
+  const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
+  return { wordCount, charCount, readingTimeMinutes };
+}
+
+// Auto title extraction from content without overwriting explicit titles
+export function extractAutoTitle(contentHtmlOrText: string, currentTitle: string): string {
+  if (currentTitle && currentTitle.trim() !== 'Untitled Note' && currentTitle.trim() !== '') {
+    return currentTitle;
+  }
+  const cleanText = contentHtmlOrText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!cleanText) return 'Untitled Note';
+  const firstLine = cleanText.slice(0, 50).trim();
+  return firstLine || 'Untitled Note';
+}
+

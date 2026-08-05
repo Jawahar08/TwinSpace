@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { Note, Attachment, AuthTokenResponse } from '@syncnotes/types';
+import type { Note, Attachment, AuthTokenResponse, HandoffState, DeviceActivity } from '@syncnotes/types';
 import { db } from './sync/db';
 import { syncEngine, type SyncState } from './sync/syncEngine';
 import { Header } from './components/Header';
 import { NotesList, type ViewFilter } from './components/NotesList';
 import { Editor } from './components/Editor';
 import { AuthModal } from './components/AuthModal';
+import { CommandPalette } from './components/CommandPalette';
+import { LiveHandoffBanner } from './components/LiveHandoffBanner';
+import { RightDrawer } from './components/RightDrawer';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8080';
 
@@ -18,9 +21,15 @@ export function App() {
   const [filter, setFilter] = useState<ViewFilter>('ALL');
   const [syncState, setSyncState] = useState<SyncState>('OFFLINE');
   const [updatedJustNow, setUpdatedJustNow] = useState(false);
+  const [updatedFromDevice, setUpdatedFromDevice] = useState<'Windows' | 'iPhone' | 'Device'>('iPhone');
   const [darkMode, setDarkMode] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isRightDrawerOpen, setIsRightDrawerOpen] = useState(false);
+  const [handoffState, setHandoffState] = useState<HandoffState | null>(null);
+  const [deviceActivities, setDeviceActivities] = useState<DeviceActivity[]>([]);
 
   // Load theme & auth token on startup
   useEffect(() => {
@@ -33,7 +42,6 @@ export function App() {
       document.documentElement.classList.add('dark');
     }
 
-    // Check secure storage token
     const loadToken = async () => {
       let storedToken = localStorage.getItem('syncnotes_access_token');
       if (window.electronAPI) {
@@ -49,16 +57,34 @@ export function App() {
     loadToken();
   }, []);
 
-  // Subscribe to syncEngine state & remote updates
+  // Subscribe to syncEngine state, remote updates & device activity stream
   useEffect(() => {
     const unsubState = syncEngine.subscribeState(setSyncState);
-    const unsubRemote = syncEngine.subscribeRemoteUpdate((updatedNote) => {
+
+    const unsubRemote = syncEngine.subscribeRemoteUpdate((updatedNote, originDeviceType) => {
       setUpdatedJustNow(true);
-      setTimeout(() => setUpdatedJustNow(false), 3000);
+      setUpdatedFromDevice(originDeviceType);
+
+      // Trigger Live Handoff banner if update comes from another device (e.g. iPhone)
+      if (originDeviceType === 'iPhone') {
+        setHandoffState({
+          noteId: updatedNote.id,
+          noteTitle: updatedNote.title || 'Untitled Note',
+          originDeviceId: updatedNote.deviceId || 'iPhone',
+          originDeviceType: 'iPhone',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      setTimeout(() => setUpdatedJustNow(false), 4000);
     });
+
+    const unsubActivity = syncEngine.subscribeDeviceActivity(setDeviceActivities);
+
     return () => {
       unsubState();
       unsubRemote();
+      unsubActivity();
     };
   }, []);
 
@@ -274,41 +300,94 @@ export function App() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-apple-bgLight dark:bg-apple-bgDark">
-      <Header
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onNewNote={handleNewNote}
-        syncState={syncState}
-        updatedJustNow={updatedJustNow}
-        darkMode={darkMode}
-        onToggleTheme={toggleTheme}
-        onSignOut={handleSignOut}
-        userEmail={userEmail}
-      />
-
-      <div className="flex-1 flex overflow-hidden">
-        <NotesList
-          notes={displayedNotes}
-          selectedNoteId={selectedNoteId}
-          onSelectNote={setSelectedNoteId}
-          filter={filter}
-          onFilterChange={setFilter}
-          onTogglePin={handleTogglePin}
-          onToggleArchive={handleToggleArchive}
-          onSoftDelete={handleSoftDelete}
-          onRestore={handleRestore}
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-continuum-bgLight dark:bg-continuum-bgDark font-sans text-continuum-textLight dark:text-continuum-textDark">
+      {/* Top Header Command Bar (Hidden in Focus Mode) */}
+      {!isFocusMode && (
+        <Header
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onNewNote={handleNewNote}
+          syncState={syncState}
+          updatedJustNow={updatedJustNow}
+          updatedFromDevice={updatedFromDevice}
+          darkMode={darkMode}
+          onToggleTheme={toggleTheme}
+          onSignOut={handleSignOut}
+          userEmail={userEmail}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onToggleFocusMode={() => setIsFocusMode(true)}
+          isRightDrawerOpen={isRightDrawerOpen}
+          onToggleRightDrawer={() => setIsRightDrawerOpen(!isRightDrawerOpen)}
         />
+      )}
 
+      {/* Live Handoff Alert Banner */}
+      {!isFocusMode && (
+        <LiveHandoffBanner
+          handoffState={handoffState}
+          onOpenHandoffNote={(noteId) => {
+            setSelectedNoteId(noteId);
+            setHandoffState(null);
+          }}
+          onDismiss={() => setHandoffState(null)}
+        />
+      )}
+
+      {/* Main Workspace Body */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Navigation & Notes Stream Rail (Hidden in Focus Mode) */}
+        {!isFocusMode && (
+          <NotesList
+            notes={displayedNotes}
+            selectedNoteId={selectedNoteId}
+            onSelectNote={setSelectedNoteId}
+            filter={filter}
+            onFilterChange={setFilter}
+            onTogglePin={handleTogglePin}
+            onToggleArchive={handleToggleArchive}
+            onSoftDelete={handleSoftDelete}
+            onRestore={handleRestore}
+          />
+        )}
+
+        {/* Center Editor Canvas */}
         <Editor
           note={activeNote}
           onSaveNote={handleSaveNote}
           attachments={attachments}
           onUploadFile={handleUploadFile}
           onDeleteAttachment={handleDeleteAttachment}
+          isFocusMode={isFocusMode}
+          onExitFocusMode={() => setIsFocusMode(false)}
         />
+
+        {/* Contextual Right Drawer for Metadata & Attachments */}
+        {!isFocusMode && (
+          <RightDrawer
+            isOpen={isRightDrawerOpen}
+            onClose={() => setIsRightDrawerOpen(false)}
+            note={activeNote}
+            attachments={attachments}
+            onUploadFile={handleUploadFile}
+            onDeleteAttachment={handleDeleteAttachment}
+            deviceActivities={deviceActivities}
+          />
+        )}
       </div>
 
+      {/* Command Palette Modal (Ctrl+K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        notes={allNotes}
+        onSelectNote={setSelectedNoteId}
+        onNewNote={handleNewNote}
+        onToggleFocusMode={() => setIsFocusMode(true)}
+        onToggleTheme={toggleTheme}
+        darkMode={darkMode}
+      />
+
+      {/* Authentication Modal */}
       <AuthModal
         isOpen={!token}
         onLogin={handleLogin}

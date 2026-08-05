@@ -1,6 +1,6 @@
 import { Client, type IMessage } from '@stomp/stompjs';
-import type { Note, SyncAckResponse, SyncChangeEvent, SyncMutationRequest, SyncResyncResponse } from '@syncnotes/types';
-import { resolveLwwConflict, generateClientMutationId, getOrCreateDeviceId } from '@syncnotes/utils';
+import type { Note, SyncAckResponse, SyncChangeEvent, SyncMutationRequest, SyncResyncResponse, DeviceActivity } from '@syncnotes/types';
+import { resolveLwwConflict, generateClientMutationId, getOrCreateDeviceId, getReadableDeviceName } from '@syncnotes/utils';
 import { db } from './db';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8080';
@@ -16,7 +16,9 @@ export class SyncEngine {
   private state: SyncState = 'OFFLINE';
 
   private onStateChangeListeners = new Set<(state: SyncState) => void>();
-  private onRemoteUpdateListeners = new Set<(note: Note) => void>();
+  private onRemoteUpdateListeners = new Set<(note: Note, originDeviceType: 'Windows' | 'iPhone' | 'Device') => void>();
+  private onDeviceActivityListeners = new Set<(activities: DeviceActivity[]) => void>();
+  private recentActivities: DeviceActivity[] = [];
 
   constructor() {
     this.deviceId = getOrCreateDeviceId('syncnotes_desktop_dev_id',
@@ -44,10 +46,17 @@ export class SyncEngine {
     return () => this.onStateChangeListeners.delete(listener);
   }
 
-  public subscribeRemoteUpdate(listener: (note: Note) => void) {
+  public subscribeRemoteUpdate(listener: (note: Note, originDeviceType: 'Windows' | 'iPhone' | 'Device') => void) {
     this.onRemoteUpdateListeners.add(listener);
     return () => this.onRemoteUpdateListeners.delete(listener);
   }
+
+  public subscribeDeviceActivity(listener: (activities: DeviceActivity[]) => void) {
+    this.onDeviceActivityListeners.add(listener);
+    listener(this.recentActivities);
+    return () => this.onDeviceActivityListeners.delete(listener);
+  }
+
 
   private setState(newState: SyncState) {
     this.state = newState;
@@ -130,10 +139,11 @@ export class SyncEngine {
     if (event.entityType === 'NOTE') {
       const incomingNote = event.payload as Note;
       const existing = await db.notes.get(incomingNote.id);
+      const originDeviceType = getReadableDeviceName(event.originDeviceId);
 
       if (!existing) {
         await db.notes.put(incomingNote);
-        this.notifyRemoteUpdate(incomingNote);
+        this.notifyRemoteUpdate(incomingNote, originDeviceType, event.operation, event.originDeviceId);
       } else {
         const lww = resolveLwwConflict(
           incomingNote.updatedAt,
@@ -144,7 +154,7 @@ export class SyncEngine {
 
         if (lww.clientWins || event.operation === 'DELETE') {
           await db.notes.put(incomingNote);
-          this.notifyRemoteUpdate(incomingNote);
+          this.notifyRemoteUpdate(incomingNote, originDeviceType, event.operation, event.originDeviceId);
         }
       }
 
@@ -159,13 +169,31 @@ export class SyncEngine {
 
     if (ack.status === 'CONFLICT_LWW_LOST' && ack.authoritativeNote) {
       await db.notes.put(ack.authoritativeNote);
-      this.notifyRemoteUpdate(ack.authoritativeNote);
+      this.notifyRemoteUpdate(ack.authoritativeNote, 'Device', 'UPDATE', 'server');
     }
   }
 
-  private notifyRemoteUpdate(note: Note) {
-    this.onRemoteUpdateListeners.forEach(l => l(note));
+  private notifyRemoteUpdate(
+    note: Note,
+    originDeviceType: 'Windows' | 'iPhone' | 'Device' = 'Device',
+    operation: 'CREATE' | 'UPDATE' | 'DELETE' = 'UPDATE',
+    originDeviceId: string = ''
+  ) {
+    const activity: DeviceActivity = {
+      id: generateClientMutationId(),
+      deviceId: originDeviceId || originDeviceType,
+      deviceType: originDeviceType,
+      operation,
+      noteId: note.id,
+      noteTitle: note.title || 'Untitled Note',
+      timestamp: new Date().toISOString(),
+    };
+
+    this.recentActivities = [activity, ...this.recentActivities.slice(0, 19)];
+    this.onDeviceActivityListeners.forEach(l => l(this.recentActivities));
+    this.onRemoteUpdateListeners.forEach(l => l(note, originDeviceType));
   }
+
 
   /**
    * Local-First Mutation Write:
