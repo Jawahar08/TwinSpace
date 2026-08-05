@@ -19,14 +19,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
   if (!editor) return null;
 
   const btnClass = (isActive: boolean) =>
-    `p-1.5 rounded-lg transition ${
+    `p-1.5 rounded-lg transition-all duration-150 ${
       isActive
-        ? 'bg-apple-yellow text-white shadow-xs'
-        : 'text-apple-subtextLight dark:text-apple-subtextDark hover:bg-gray-200 dark:hover:bg-gray-800'
+        ? 'bg-continuum-amber text-white shadow-xs font-bold'
+        : 'text-continuum-subtextLight dark:text-continuum-subtextDark hover:bg-black/10 dark:hover:bg-white/10 hover:text-continuum-textDark'
     }`;
 
   return (
-    <div className="h-10 border-b border-gray-200 dark:border-gray-800 px-4 flex items-center gap-1 bg-apple-cardLight dark:bg-apple-cardDark shrink-0">
+    <div className="h-10 border-b border-continuum-borderLight dark:border-continuum-borderDark px-4 flex items-center gap-1 bg-continuum-cardLight dark:bg-continuum-cardDark shrink-0">
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={btnClass(editor.isActive('bold'))}
@@ -51,7 +51,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
         <Underline className="w-4 h-4" />
       </button>
 
-      <div className="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1" />
+      <div className="w-px h-4 bg-continuum-borderLight dark:bg-continuum-borderDark mx-1" />
 
       <button
         onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -77,7 +77,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
         <CheckSquare className="w-4 h-4" />
       </button>
 
-      <div className="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1" />
+      <div className="w-px h-4 bg-continuum-borderLight dark:bg-continuum-borderDark mx-1" />
 
       <button
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}

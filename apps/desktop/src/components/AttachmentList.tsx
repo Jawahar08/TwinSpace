@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import type { Attachment } from '@syncnotes/types';
 import { Paperclip, File, Image as ImageIcon, FileArchive, FileText, Trash2, Download, Plus } from 'lucide-react';
+import { formatBytes } from '@syncnotes/utils';
 
 interface AttachmentListProps {
   attachments: Attachment[];
@@ -24,28 +25,22 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
   };
 
   const getFileIcon = (mime: string) => {
-    if (mime.startsWith('image/')) return <ImageIcon className="w-4 h-4 text-sky-500" />;
+    if (mime.startsWith('image/')) return <ImageIcon className="w-4 h-4 text-sky-400" />;
     if (mime.includes('zip') || mime.includes('compressed')) return <FileArchive className="w-4 h-4 text-amber-500" />;
     if (mime.includes('pdf') || mime.includes('document')) return <FileText className="w-4 h-4 text-emerald-500" />;
-    return <File className="w-4 h-4 text-indigo-500" />;
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return <File className="w-4 h-4 text-indigo-400" />;
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-800 p-4 bg-apple-sidebarLight/40 dark:bg-apple-sidebarDark/40">
+    <div className="border-t border-continuum-borderLight dark:border-continuum-borderDark p-4 bg-continuum-sidebarLight/50 dark:bg-continuum-sidebarDark/50 shrink-0">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-apple-subtextLight dark:text-apple-subtextDark">
-          <Paperclip className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1.5 text-xs font-bold text-continuum-subtextLight dark:text-continuum-subtextDark uppercase tracking-wider">
+          <Paperclip className="w-3.5 h-3.5 text-continuum-amber" />
           <span>Attachments ({attachments.length})</span>
         </div>
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1 text-xs font-medium text-apple-yellow hover:text-yellow-600 transition"
+          className="flex items-center gap-1 text-xs font-semibold text-continuum-amber hover:text-amber-400 transition"
         >
           <Plus className="w-3.5 h-3.5" /> Add Attachment
         </button>
@@ -62,16 +57,16 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
           {attachments.map((att) => (
             <div
               key={att.id}
-              className="flex items-center justify-between p-2.5 rounded-xl bg-apple-cardLight dark:bg-apple-cardDark border border-gray-200 dark:border-gray-800 text-xs shadow-xs"
+              className="flex items-center justify-between p-2.5 rounded-xl bg-continuum-cardLight dark:bg-continuum-cardDark border border-continuum-borderLight dark:border-continuum-borderDark text-xs shadow-xs"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 {getFileIcon(att.mimeType)}
                 <div className="truncate">
-                  <p className="font-medium text-apple-textLight dark:text-apple-textDark truncate">
+                  <p className="font-semibold text-continuum-textLight dark:text-continuum-textDark truncate">
                     {att.originalName}
                   </p>
-                  <p className="text-[10px] text-apple-subtextLight dark:text-apple-subtextDark">
-                    {formatSize(att.byteSize)}
+                  <p className="text-[10px] text-continuum-subtextLight dark:text-continuum-subtextDark">
+                    {formatBytes(att.byteSize)}
                   </p>
                 </div>
               </div>
@@ -83,14 +78,14 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
                     download={att.originalName}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-apple-subtextLight dark:text-apple-subtextDark hover:text-apple-yellow transition"
+                    className="p-1 rounded hover:bg-white/10 text-continuum-subtextLight dark:text-continuum-subtextDark hover:text-continuum-amber transition"
                   >
                     <Download className="w-3.5 h-3.5" />
                   </a>
                 )}
                 <button
                   onClick={() => onDeleteAttachment(att.id)}
-                  className="p-1 rounded hover:bg-red-500/10 text-apple-subtextLight dark:text-apple-subtextDark hover:text-red-500 transition"
+                  className="p-1 rounded hover:bg-rose-500/20 text-continuum-subtextLight dark:text-continuum-subtextDark hover:text-rose-500 transition"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

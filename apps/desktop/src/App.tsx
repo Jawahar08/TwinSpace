@@ -33,13 +33,14 @@ export function App() {
 
   // Load theme & auth token on startup
   useEffect(() => {
-    const savedTheme = localStorage.getItem('syncnotes_theme');
+    const savedTheme = localStorage.getItem('twinspace_theme') || localStorage.getItem('syncnotes_theme');
     if (savedTheme === 'light') {
       setDarkMode(false);
       document.documentElement.classList.remove('dark');
     } else {
       setDarkMode(true);
       document.documentElement.classList.add('dark');
+      localStorage.setItem('twinspace_theme', 'dark');
     }
 
     const loadToken = async () => {
@@ -292,10 +293,10 @@ export function App() {
     setDarkMode(next);
     if (next) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('syncnotes_theme', 'dark');
+      localStorage.setItem('twinspace_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('syncnotes_theme', 'light');
+      localStorage.setItem('twinspace_theme', 'light');
     }
   };
 
