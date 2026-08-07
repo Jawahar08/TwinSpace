@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
+import java.net.URI;
 
 @Configuration
 public class DataSourceConfig {
@@ -21,36 +22,45 @@ public class DataSourceConfig {
     public DataSource dataSource(
             DataSourceProperties properties,
             @Value("${DATABASE_URL:#{null}}") String envDatabaseUrl,
-            @Value("${SPRING_PROFILES_ACTIVE:default}") String activeProfile
+            @Value("${SPRING_PROFILES_ACTIVE:default}") String activeProfile,
+            @Value("${USE_H2:false}") boolean useH2
     ) {
         String url = properties.getUrl();
         String username = properties.getUsername();
         String password = properties.getPassword();
         String driverClassName = null;
 
-        if (envDatabaseUrl != null && !envDatabaseUrl.isBlank()) {
-            if ("h2".equalsIgnoreCase(activeProfile) || envDatabaseUrl.contains("localhost:5432")) {
-                log.info("Using embedded H2 database (active profile: '{}', DATABASE_URL contains localhost).", activeProfile);
-                url = "jdbc:h2:mem:syncnotes;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH";
-                username = "sa";
-                password = "";
-                driverClassName = "org.h2.Driver";
-            } else {
-                url = envDatabaseUrl;
-                if (url.startsWith("postgres://")) {
-                    url = url.replace("postgres://", "jdbc:postgresql://");
-                } else if (url.startsWith("postgresql://")) {
-                    url = url.replace("postgresql://", "jdbc:postgresql://");
-                }
-                driverClassName = "org.postgresql.Driver";
-                log.info("Using external PostgreSQL database from DATABASE_URL.");
-            }
-        } else if (url == null || url.isBlank() || url.contains("h2")) {
+        boolean forceH2 = useH2 || "h2".equalsIgnoreCase(activeProfile);
+
+        if (forceH2 || envDatabaseUrl == null || envDatabaseUrl.isBlank() || envDatabaseUrl.contains("localhost:5432")) {
+            log.info("Using embedded H2 database (active profile: '{}', forceH2: {}).", activeProfile, forceH2);
             url = "jdbc:h2:mem:syncnotes;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH";
             username = "sa";
             password = "";
             driverClassName = "org.h2.Driver";
-            log.info("Using default embedded H2 database.");
+        } else if (envDatabaseUrl.startsWith("postgres://") || envDatabaseUrl.startsWith("postgresql://") || envDatabaseUrl.startsWith("jdbc:postgresql://")) {
+            driverClassName = "org.postgresql.Driver";
+            String cleanUrl = envDatabaseUrl;
+            if (cleanUrl.startsWith("jdbc:")) {
+                cleanUrl = cleanUrl.substring(5);
+            }
+            try {
+                URI uri = new URI(cleanUrl);
+                if (uri.getUserInfo() != null && uri.getUserInfo().contains(":")) {
+                    String[] userInfo = uri.getUserInfo().split(":", 2);
+                    username = userInfo[0];
+                    password = userInfo[1];
+                    log.info("Extracted database credentials for user '{}' from DATABASE_URL.", username);
+                }
+                String host = uri.getHost();
+                int port = uri.getPort() > 0 ? uri.getPort() : 5432;
+                String path = uri.getPath();
+                url = "jdbc:postgresql://" + host + ":" + port + path;
+            } catch (Exception e) {
+                log.warn("Could not parse DATABASE_URL as URI, using raw URL: {}", e.getMessage());
+                url = envDatabaseUrl.startsWith("jdbc:") ? envDatabaseUrl : "jdbc:" + envDatabaseUrl;
+            }
+            log.info("Using external PostgreSQL database from DATABASE_URL target: {}", url);
         }
 
         HikariDataSource dataSource = new HikariDataSource();
