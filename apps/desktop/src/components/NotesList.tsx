@@ -61,7 +61,11 @@ export const NotesList: React.FC<NotesListProps> = ({
   };
 
   return (
-    <div className="w-80 border-r border-continuum-borderLight dark:border-continuum-borderDark bg-continuum-sidebarLight dark:bg-continuum-sidebarDark flex flex-col shrink-0 select-none overflow-hidden">
+    <div
+      className={`w-full md:w-80 border-r border-continuum-borderLight dark:border-continuum-borderDark bg-continuum-sidebarLight dark:bg-continuum-sidebarDark flex flex-col shrink-0 select-none overflow-hidden h-full ${
+        selectedNoteId ? 'hidden md:flex' : 'flex'
+      }`}
+    >
       {/* Category Navigation Bar */}
       <div className="p-2 border-b border-continuum-borderLight dark:border-continuum-borderDark flex items-center justify-around gap-1 text-[11px] font-medium text-continuum-subtextLight dark:text-continuum-subtextDark">
         {(['ALL', 'PINNED', 'ARCHIVED', 'TRASH'] as ViewFilter[]).map((f) => (

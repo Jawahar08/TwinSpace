@@ -12,6 +12,7 @@ import { AttachmentList } from './AttachmentList';
 
 const EyeOff = (LucideIcons as any).EyeOff || (LucideIcons as any).Eye;
 const UploadCloud = (LucideIcons as any).UploadCloud || (LucideIcons as any).Upload;
+const ChevronLeft = (LucideIcons as any).ChevronLeft || (LucideIcons as any).Sun;
 
 interface EditorProps {
   note: Note | null;
@@ -21,6 +22,7 @@ interface EditorProps {
   onDeleteAttachment: (id: string) => Promise<void>;
   isFocusMode: boolean;
   onExitFocusMode: () => void;
+  onBackToList?: () => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -31,6 +33,7 @@ export const Editor: React.FC<EditorProps> = ({
   onDeleteAttachment,
   isFocusMode,
   onExitFocusMode,
+  onBackToList,
 }) => {
   const [title, setTitle] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
@@ -113,7 +116,7 @@ export const Editor: React.FC<EditorProps> = ({
 
   if (!note) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-continuum-subtextLight dark:text-continuum-subtextDark p-8 select-none bg-continuum-bgLight dark:bg-continuum-bgDark">
+      <div className="hidden md:flex flex-1 flex-col items-center justify-center text-continuum-subtextLight dark:text-continuum-subtextDark p-8 select-none bg-continuum-bgLight dark:bg-continuum-bgDark">
         <div className="w-16 h-16 rounded-2xl bg-continuum-amber/10 flex items-center justify-center mb-3 text-continuum-amber">
           <UploadCloud className="w-8 h-8 opacity-70" />
         </div>
@@ -132,10 +135,22 @@ export const Editor: React.FC<EditorProps> = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`flex-1 flex flex-col h-full bg-continuum-cardLight dark:bg-continuum-cardDark overflow-hidden relative ${
+      className={`w-full flex-1 flex flex-col h-full bg-continuum-cardLight dark:bg-continuum-cardDark overflow-hidden relative ${
         isDragOver ? 'ring-2 ring-continuum-amber ring-inset' : ''
       }`}
     >
+      {/* Mobile Back to Notes Navigation Bar */}
+      {onBackToList && (
+        <div className="md:hidden flex items-center px-4 py-2 border-b border-continuum-borderLight dark:border-continuum-borderDark bg-continuum-sidebarLight dark:bg-continuum-sidebarDark shrink-0">
+          <button
+            onClick={onBackToList}
+            className="flex items-center gap-1 text-xs font-bold text-continuum-amber hover:underline py-1"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Back to Notes</span>
+          </button>
+        </div>
+      )}
       {/* Drag & Drop Visual Overlay */}
       {isDragOver && (
         <div className="absolute inset-0 z-30 bg-continuum-amber/15 backdrop-blur-xs flex flex-col items-center justify-center text-continuum-amber font-bold pointer-events-none">

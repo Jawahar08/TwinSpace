@@ -26,7 +26,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
     }`;
 
   return (
-    <div className="h-10 border-b border-continuum-borderLight dark:border-continuum-borderDark px-4 flex items-center gap-1 bg-continuum-cardLight dark:bg-continuum-cardDark shrink-0">
+    <div className="h-10 border-b border-continuum-borderLight dark:border-continuum-borderDark px-3 flex items-center gap-1 bg-continuum-cardLight dark:bg-continuum-cardDark shrink-0 overflow-x-auto select-none no-scrollbar">
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={btnClass(editor.isActive('bold'))}

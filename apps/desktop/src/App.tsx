@@ -390,6 +390,7 @@ export function App() {
           onDeleteAttachment={handleDeleteAttachment}
           isFocusMode={isFocusMode}
           onExitFocusMode={() => setIsFocusMode(false)}
+          onBackToList={() => setSelectedNoteId(null)}
         />
 
         {/* Contextual Right Drawer for Metadata & Attachments */}
