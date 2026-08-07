@@ -14,7 +14,7 @@ import { RightDrawer } from './components/RightDrawer';
 import { TwinSpacePanel } from './components/TwinSpacePanel';
 import { NotionSettingsModal } from './components/NotionSettingsModal';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8080';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'https://twinspace.onrender.com';
 
 export function App() {
   const [token, setToken] = useState<string | null>(null);

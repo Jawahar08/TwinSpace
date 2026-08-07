@@ -3,8 +3,8 @@ import type { Note, SyncAckResponse, SyncChangeEvent, SyncMutationRequest, SyncR
 import { resolveLwwConflict, generateClientMutationId, getOrCreateDeviceId, getReadableDeviceName } from '@syncnotes/utils';
 import { db } from './db';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8080';
-const WS_BASE = (import.meta.env.VITE_WS_BASE_URL as string) || 'ws://localhost:8080/ws-sync';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'https://twinspace.onrender.com';
+const WS_BASE = (import.meta.env.VITE_WS_BASE_URL as string) || 'wss://twinspace.onrender.com/ws-sync';
 
 export type SyncState = 'CONNECTED' | 'CONNECTING' | 'OFFLINE' | 'RECONNECTING' | 'SYNCING' | 'ERROR';
 
